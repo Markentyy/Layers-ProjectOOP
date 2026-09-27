@@ -17,6 +17,7 @@ namespace Cli.Engine
             if (tokens.Count == 0)
                 throw new CommandException("Empty command.");
 
+            RejectPlaceholders(line, tokens);
             string verb = tokens[0].ToLowerInvariant();
             List<string> args = new();
             Dictionary<string, string?> options =
@@ -58,6 +59,38 @@ namespace Cli.Engine
             }
 
             return new ParsedCommand(verb, args, options);
+        }
+
+        /// <summary>
+        /// Rejects literal angle brackets: they only mark placeholders in help.
+        /// Suggests the same line with brackets removed.
+        /// </summary>
+        /// <param name="line">The raw input line.</param>
+        /// <param name="tokens">The extracted tokens.</param>
+        private static void RejectPlaceholders(string line, List<string> tokens)
+        {
+            bool hit = false;
+            foreach (string token in tokens)
+            {
+                string value = token;
+                int eq = token.IndexOf('=');
+                if (token.StartsWith("--", StringComparison.Ordinal) && eq >= 0)
+                    value = token[(eq + 1)..];
+                if (value.Length > 2 && value.StartsWith("<", StringComparison.Ordinal) &&
+                    value.EndsWith(">", StringComparison.Ordinal))
+                {
+                    hit = true;
+                    break;
+                }
+            }
+            if (!hit)
+                return;
+
+            string suggestion = System.Text.RegularExpressions.Regex.Replace(line, "<([^<>]*)>", "$1").Trim();
+            string hint = "Angle brackets <> only mark placeholders in help - type values without them.";
+            if (!suggestion.Equals(line.Trim(), StringComparison.Ordinal))
+                hint += $" Try: {suggestion}";
+            throw new CommandException(hint);
         }
 
         /// <summary>
