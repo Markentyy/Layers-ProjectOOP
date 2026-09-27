@@ -23,5 +23,11 @@ namespace Infra.Display
         /// </summary>
         /// <returns>The entered line, or null on end of input.</returns>
         string? ReadLine();
+
+        /// <summary>
+        /// Gets whether the input comes from a pipe or file instead of the keyboard.
+        /// Piped lines are echoed back so scripted runs stay readable.
+        /// </summary>
+        bool IsInputRedirected { get; }
     }
 }

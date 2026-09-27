@@ -25,6 +25,8 @@ namespace Cli.Engine
                 string? line = console.ReadLine();
                 if (line is null)
                     return;
+                if (console.IsInputRedirected)
+                    console.WriteLine(line);
                 if (string.IsNullOrWhiteSpace(line))
                     continue;
 

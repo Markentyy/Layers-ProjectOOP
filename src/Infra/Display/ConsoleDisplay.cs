@@ -22,5 +22,10 @@ namespace Infra.Display
         /// </summary>
         /// <returns>The entered line, or null on end of input.</returns>
         public string? ReadLine() => Console.ReadLine();
+
+        /// <summary>
+        /// Gets whether the input comes from a pipe or file instead of the keyboard.
+        /// </summary>
+        public bool IsInputRedirected => Console.IsInputRedirected;
     }
 }

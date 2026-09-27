@@ -89,6 +89,8 @@ namespace Cli.Presenter
             string? input = console.ReadLine();
             if (input is null || input.Trim().Equals("cancel", StringComparison.OrdinalIgnoreCase))
                 throw new DialogCancelledException();
+            if (console.IsInputRedirected)
+                console.WriteLine(input);
             return input;
         }
     }
