@@ -87,9 +87,9 @@ namespace Cli.Engine
                 return;
 
             string suggestion = System.Text.RegularExpressions.Regex.Replace(line, "<([^<>]*)>", "$1").Trim();
-            string hint = "Angle brackets <> only mark placeholders in help - type values without them.";
+            string hint = "Wrong format: angle brackets <> must not be typed.";
             if (!suggestion.Equals(line.Trim(), StringComparison.Ordinal))
-                hint += $" Try: {suggestion}";
+                hint += $" Example: {suggestion}";
             throw new CommandException(hint);
         }
 
