@@ -2,6 +2,7 @@ using Cli.Engine;
 
 using Infra.Display;
 using Core.GameSystem;
+using Cli.Presenter;
 namespace Cli.Chars
 {
     /// <summary>
@@ -10,6 +11,7 @@ namespace Cli.Chars
     public sealed class AddCommand : IShellCommand
     {
         private readonly CharsWorld _world;
+        private readonly CharsPresenter _presenter;
 
         /// <summary>
         /// Gets the command verb.
@@ -27,21 +29,24 @@ namespace Cli.Chars
         public string Usage => "add --char_id <id|name> --id <id|name>";
 
         /// <summary>
-        /// Initializes an add command bound to the given world.
+        /// Initializes an add command bound to the given world and presenter.
         /// </summary>
         /// <param name="world">The characters world.</param>
-        public AddCommand(CharsWorld world)
+        /// <param name="presenter">The characters presenter.</param>
+        public AddCommand(CharsWorld world, CharsPresenter presenter)
         {
             ArgumentNullException.ThrowIfNull(world);
+            ArgumentNullException.ThrowIfNull(presenter);
             _world = world;
+            _presenter = presenter;
         }
 
         /// <summary>
         /// Equips an item or teaches an ability to the selected character.
         /// </summary>
-        /// <param name="console">The console for output.</param>
+        /// <param name="display">The display (unused, kept for the contract).</param>
         /// <param name="command">The parsed command line.</param>
-        public void Execute(IDisplay console, ParsedCommand command)
+        public void Execute(IDisplay display, ParsedCommand command)
         {
             command.ExpectArgCount(0, 0, Usage);
             command.ExpectOptions(Usage, "char_id", "id");
@@ -55,12 +60,11 @@ namespace Cli.Chars
                 KeyValuePair<string, Equipment> item = _world.ResolveItem(target);
                 if (character.Value.Inventory.Items.Contains(item.Value))
                 {
-                    console.WriteLine($"{character.Value.Name} already has {item.Value.Name} equipped.");
+                    _presenter.ShowAlreadyEquipped(character.Value.Name, item.Value.Name);
                     return;
                 }
                 character.Value.Equip(item.Value);
-                console.WriteLine($"{character.Value.Name} equipped {item.Value.Name} " +
-                    $"(+{item.Value.AttackBonus} ATK, +{item.Value.ArmorBonus} ARM).");
+                _presenter.ShowEquipped(character.Value.Name, item.Value.Name, item.Value.AttackBonus, item.Value.ArmorBonus);
                 return;
             }
 
@@ -69,10 +73,10 @@ namespace Cli.Chars
                 KeyValuePair<string, Ability> ability = _world.ResolveAbility(target);
                 if (!_world.Learn(character.Key, ability.Key))
                 {
-                    console.WriteLine($"{character.Value.Name} already knows {ability.Value.Name}.");
+                    _presenter.ShowAlreadyKnows(character.Value.Name, ability.Value.Name);
                     return;
                 }
-                console.WriteLine($"{character.Value.Name} learned {ability.Value.Name} [{ability.Key}].");
+                _presenter.ShowLearned(character.Value.Name, ability.Value.Name, ability.Key);
                 return;
             }
 

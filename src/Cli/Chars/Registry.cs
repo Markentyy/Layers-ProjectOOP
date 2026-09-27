@@ -38,7 +38,19 @@ namespace Cli.Chars
         /// <summary>
         /// Gets the number of stored objects.
         /// </summary>
+        /// <value>The number of stored objects.</value>
         public int Count => _byId.Count;
+
+        /// <summary>
+        /// Removes all stored objects and restarts id generation.
+        /// </summary>
+        public void Clear()
+        {
+            _byId.Clear();
+            _ids.Clear();
+            _nameIndex.Clear();
+            _counter = 0;
+        }
 
         /// <summary>
         /// Adds an object, using the custom id when provided and free.

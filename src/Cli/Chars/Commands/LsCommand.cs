@@ -2,6 +2,7 @@ using Cli.Engine;
 
 using Infra.Display;
 using Core.GameSystem;
+using Cli.Presenter;
 namespace Cli.Chars
 {
     /// <summary>
@@ -10,6 +11,7 @@ namespace Cli.Chars
     public sealed class LsCommand : IShellCommand
     {
         private readonly CharsWorld _world;
+        private readonly CharsPresenter _presenter;
 
         /// <summary>
         /// Gets the command verb.
@@ -27,21 +29,24 @@ namespace Cli.Chars
         public string Usage => "ls <char|item|ability> [--id <id|name>]";
 
         /// <summary>
-        /// Initializes a list command bound to the given world.
+        /// Initializes a list command bound to the given world and presenter.
         /// </summary>
         /// <param name="world">The characters world.</param>
-        public LsCommand(CharsWorld world)
+        /// <param name="presenter">The characters presenter.</param>
+        public LsCommand(CharsWorld world, CharsPresenter presenter)
         {
             ArgumentNullException.ThrowIfNull(world);
+            ArgumentNullException.ThrowIfNull(presenter);
             _world = world;
+            _presenter = presenter;
         }
 
         /// <summary>
         /// Prints the short category listing or the full object state.
         /// </summary>
-        /// <param name="console">The console for output.</param>
+        /// <param name="display">The display (unused, kept for the contract).</param>
         /// <param name="command">The parsed command line.</param>
-        public void Execute(IDisplay console, ParsedCommand command)
+        public void Execute(IDisplay display, ParsedCommand command)
         {
             command.ExpectArgCount(1, 1, Usage);
             command.ExpectOptions(Usage, "id");
@@ -52,21 +57,21 @@ namespace Cli.Chars
             {
                 case "char":
                     if (selected is null)
-                        ListCharacters(console);
+                        ListCharacters();
                     else
-                        ShowCharacter(console, _world.ResolveCharacter(selected));
+                        ShowCharacter(_world.ResolveCharacter(selected));
                     break;
                 case "item":
                     if (selected is null)
-                        ListItems(console);
+                        ListItems();
                     else
-                        ShowItem(console, _world.ResolveItem(selected));
+                        ShowItem(_world.ResolveItem(selected));
                     break;
                 case "ability":
                     if (selected is null)
-                        ListAbilities(console);
+                        ListAbilities();
                     else
-                        ShowAbility(console, _world.ResolveAbility(selected));
+                        ShowAbility(_world.ResolveAbility(selected));
                     break;
                 default:
                     throw new CommandException($"Unknown category '{category}'. Use char, item or ability.");
@@ -76,138 +81,97 @@ namespace Cli.Chars
         /// <summary>
         /// Prints one line per character.
         /// </summary>
-        /// <param name="console">The console for output.</param>
-        private void ListCharacters(IDisplay console)
+        private void ListCharacters()
         {
             if (_world.Characters.Count == 0)
             {
-                console.WriteLine("No characters. Create one with: create char");
+                _presenter.ShowEmptyList("characters", "create char");
                 return;
             }
             foreach (KeyValuePair<string, Character> entry in _world.Characters.All)
             {
                 Character c = entry.Value;
-                string state = c.IsDefeated ? " (defeated)" : "";
-                console.WriteLine($"[{entry.Key}] {c.Name} - {c.Health}/{c.MaxHealth} HP, " +
-                    $"{c.TotalAttack} ATK, {c.TotalArmor} ARM{state}");
+                _presenter.ShowCharacterShort(entry.Key, c.Name, c.Health, c.MaxHealth, c.TotalAttack, c.TotalArmor, c.IsDefeated);
             }
         }
 
         /// <summary>
         /// Prints one line per item with its users.
         /// </summary>
-        /// <param name="console">The console for output.</param>
-        private void ListItems(IDisplay console)
+        private void ListItems()
         {
             if (_world.Items.Count == 0)
             {
-                console.WriteLine("No items. Create one with: create item");
+                _presenter.ShowEmptyList("items", "create item");
                 return;
             }
             foreach (KeyValuePair<string, Equipment> entry in _world.Items.All)
             {
                 string users = string.Join(", ", _world.UsersOfItem(entry.Value).Select(u => u.Value.Name));
-                console.WriteLine($"[{entry.Key}] {entry.Value.Name} " +
-                    $"(+{entry.Value.AttackBonus} ATK, +{entry.Value.ArmorBonus} ARM) - used by: {Fallback(users)}");
+                _presenter.ShowItemShort(entry.Key, entry.Value.Name, entry.Value.AttackBonus, entry.Value.ArmorBonus, users);
             }
         }
 
         /// <summary>
         /// Prints one line per ability with its holders.
         /// </summary>
-        /// <param name="console">The console for output.</param>
-        private void ListAbilities(IDisplay console)
+        private void ListAbilities()
         {
             if (_world.Abilities.Count == 0)
             {
-                console.WriteLine("No abilities. Create one with: create ability");
+                _presenter.ShowEmptyList("abilities", "create ability");
                 return;
             }
             foreach (KeyValuePair<string, Ability> entry in _world.Abilities.All)
             {
                 string holders = string.Join(", ", _world.HoldersOfAbility(entry.Key).Select(h => h.Value.Name));
-                console.WriteLine($"[{entry.Key}] {entry.Value.Name} (x{entry.Value.DamageMultiplier}) - known by: {Fallback(holders)}");
+                _presenter.ShowAbilityShort(entry.Key, entry.Value.Name, entry.Value.DamageMultiplier, holders);
             }
         }
 
         /// <summary>
         /// Prints the full state of one character.
         /// </summary>
-        /// <param name="console">The console for output.</param>
         /// <param name="entry">The character id and instance.</param>
-        private void ShowCharacter(IDisplay console, KeyValuePair<string, Character> entry)
+        private void ShowCharacter(KeyValuePair<string, Character> entry)
         {
             Character c = entry.Value;
-            console.WriteLine($"[{entry.Key}] {c.Name}");
-            console.WriteLine($"  HP: {c.Health}/{c.MaxHealth}");
-            console.WriteLine($"  Attack: {c.BaseAttack} base, {c.TotalAttack} total");
-            console.WriteLine($"  Armor: {c.BaseArmor} base, {c.TotalArmor} total");
-            console.WriteLine($"  Defending: {(c.IsDefending ? "yes" : "no")}");
-            console.WriteLine($"  Defeated: {(c.IsDefeated ? "yes" : "no")}");
-
-            if (c.Inventory.Count == 0)
+            List<string> items = new();
+            foreach (Equipment item in c.Inventory.Items)
             {
-                console.WriteLine("  Items: -");
+                _world.Items.TryGetId(item, out string? itemId);
+                items.Add($"[{itemId ?? "?"}] {item.Name} (+{item.AttackBonus} ATK, +{item.ArmorBonus} ARM)");
             }
-            else
+            List<string> abilities = new();
+            foreach (string abilityId in _world.BookOf(entry.Key))
             {
-                console.WriteLine("  Items:");
-                foreach (Equipment item in c.Inventory.Items)
-                {
-                    _world.Items.TryGetId(item, out string? itemId);
-                    console.WriteLine($"    [{itemId ?? "?"}] {item.Name} (+{item.AttackBonus} ATK, +{item.ArmorBonus} ARM)");
-                }
+                Ability ability = _world.Abilities.GetById(abilityId);
+                abilities.Add($"[{abilityId}] {ability.Name} (x{ability.DamageMultiplier})");
             }
-
-            IReadOnlyList<string> book = _world.BookOf(entry.Key);
-            if (book.Count == 0)
-            {
-                console.WriteLine("  Abilities: -");
-            }
-            else
-            {
-                console.WriteLine("  Abilities:");
-                foreach (string abilityId in book)
-                {
-                    Ability ability = _world.Abilities.GetById(abilityId);
-                    console.WriteLine($"    [{abilityId}] {ability.Name} (x{ability.DamageMultiplier})");
-                }
-            }
+            _presenter.ShowCharacterDetail(
+                entry.Key, c.Name, c.Health, c.MaxHealth,
+                c.BaseAttack, c.TotalAttack, c.BaseArmor, c.TotalArmor,
+                c.IsDefending, c.IsDefeated, items, abilities);
         }
 
         /// <summary>
         /// Prints the full state of one item.
         /// </summary>
-        /// <param name="console">The console for output.</param>
         /// <param name="entry">The item id and instance.</param>
-        private void ShowItem(IDisplay console, KeyValuePair<string, Equipment> entry)
+        private void ShowItem(KeyValuePair<string, Equipment> entry)
         {
-            console.WriteLine($"[{entry.Key}] {entry.Value.Name}");
-            console.WriteLine($"  Attack bonus: +{entry.Value.AttackBonus}");
-            console.WriteLine($"  Armor bonus: +{entry.Value.ArmorBonus}");
             string users = string.Join(", ", _world.UsersOfItem(entry.Value).Select(u => $"{u.Value.Name} [{u.Key}]"));
-            console.WriteLine($"  Used by: {Fallback(users)}");
+            _presenter.ShowItemDetail(entry.Key, entry.Value.Name, entry.Value.AttackBonus, entry.Value.ArmorBonus, users);
         }
 
         /// <summary>
         /// Prints the full state of one ability.
         /// </summary>
-        /// <param name="console">The console for output.</param>
         /// <param name="entry">The ability id and instance.</param>
-        private void ShowAbility(IDisplay console, KeyValuePair<string, Ability> entry)
+        private void ShowAbility(KeyValuePair<string, Ability> entry)
         {
-            console.WriteLine($"[{entry.Key}] {entry.Value.Name}");
-            console.WriteLine($"  Damage multiplier: x{entry.Value.DamageMultiplier}");
             string holders = string.Join(", ", _world.HoldersOfAbility(entry.Key).Select(h => $"{h.Value.Name} [{h.Key}]"));
-            console.WriteLine($"  Known by: {Fallback(holders)}");
+            _presenter.ShowAbilityDetail(entry.Key, entry.Value.Name, entry.Value.DamageMultiplier, holders);
         }
-
-        /// <summary>
-        /// Replaces an empty user list with a dash.
-        /// </summary>
-        /// <param name="users">The comma joined user names.</param>
-        /// <returns>The names, or "-" when empty.</returns>
-        private static string Fallback(string users) =>
-            string.IsNullOrEmpty(users) ? "-" : users;
     }
 }

@@ -2,6 +2,7 @@ using Cli.Engine;
 
 using Infra.Display;
 using Core.GameSystem;
+using Cli.Presenter;
 namespace Cli.Chars
 {
     /// <summary>
@@ -10,6 +11,7 @@ namespace Cli.Chars
     public sealed class ActCommand : IShellCommand
     {
         private readonly CharsWorld _world;
+        private readonly CharsPresenter _presenter;
 
         /// <summary>
         /// Gets the command verb.
@@ -27,21 +29,24 @@ namespace Cli.Chars
         public string Usage => "act <attack|heal|ability> <actor> <target> [--id <ability>] [--amount <n>]";
 
         /// <summary>
-        /// Initializes an act command bound to the given world.
+        /// Initializes an act command bound to the given world and presenter.
         /// </summary>
         /// <param name="world">The characters world.</param>
-        public ActCommand(CharsWorld world)
+        /// <param name="presenter">The characters presenter.</param>
+        public ActCommand(CharsWorld world, CharsPresenter presenter)
         {
             ArgumentNullException.ThrowIfNull(world);
+            ArgumentNullException.ThrowIfNull(presenter);
             _world = world;
+            _presenter = presenter;
         }
 
         /// <summary>
         /// Executes the requested action.
         /// </summary>
-        /// <param name="console">The console for output.</param>
+        /// <param name="display">The display (unused, kept for the contract).</param>
         /// <param name="command">The parsed command line.</param>
-        public void Execute(IDisplay console, ParsedCommand command)
+        public void Execute(IDisplay display, ParsedCommand command)
         {
             command.ExpectArgCount(3, 3, Usage);
             command.ExpectOptions(Usage, "id", "amount");
@@ -57,13 +62,13 @@ namespace Cli.Chars
             switch (key)
             {
                 case "attack":
-                    ActAttack(console, actor.Value, target.Value);
+                    ActAttack(actor.Value, target.Value);
                     break;
                 case "heal":
-                    ActHeal(console, command, target.Value);
+                    ActHeal(command, target.Value);
                     break;
                 default:
-                    ActAbility(console, command, actor, target.Value);
+                    ActAbility(command, actor, target.Value);
                     break;
             }
         }
@@ -71,24 +76,22 @@ namespace Cli.Chars
         /// <summary>
         /// Performs a standard attack and reports the damage.
         /// </summary>
-        /// <param name="console">The console for output.</param>
         /// <param name="attacker">The attacking character.</param>
         /// <param name="target">The target character.</param>
-        private static void ActAttack(IDisplay console, Character attacker, Character target)
+        private void ActAttack(Character attacker, Character target)
         {
             int damage = attacker.Attack(target);
             if (target.IsDefeated)
-                console.WriteLine($"{target.Name} has been defeated!");
-            console.WriteLine($"{attacker.Name} attacks {target.Name} for {damage} damage!");
+                _presenter.ShowDefeat(target.Name);
+            _presenter.ShowAttack(attacker.Name, target.Name, damage);
         }
 
         /// <summary>
         /// Heals the target by the option amount, or to full when omitted.
         /// </summary>
-        /// <param name="console">The console for output.</param>
         /// <param name="command">The parsed command line.</param>
         /// <param name="target">The character to heal.</param>
-        private static void ActHeal(IDisplay console, ParsedCommand command, Character target)
+        private void ActHeal(ParsedCommand command, Character target)
         {
             int amount;
             string? raw = command.GetOption("amount");
@@ -102,18 +105,16 @@ namespace Cli.Chars
             }
 
             target.Heal(amount);
-            console.WriteLine($"{target.Name} heals for {amount} HP. Current HP: {target.Health}/{target.MaxHealth}");
+            _presenter.ShowHeal(target.Name, amount, target.Health, target.MaxHealth);
         }
 
         /// <summary>
         /// Uses a learned ability of the actor against the target.
         /// </summary>
-        /// <param name="console">The console for output.</param>
         /// <param name="command">The parsed command line.</param>
         /// <param name="actor">The ability user id and instance.</param>
         /// <param name="target">The target character.</param>
         private void ActAbility(
-            IDisplay console,
             ParsedCommand command,
             KeyValuePair<string, Character> actor,
             Character target)
@@ -127,11 +128,10 @@ namespace Cli.Chars
                     $"Teach it first: add --char_id {actor.Key} --id {ability.Key}");
             }
 
-            console.WriteLine($"{actor.Value.Name} uses special ability: [{ability.Value.Name}] on {target.Name}!");
             int damage = actor.Value.UseAbility(ability.Value, target);
-            console.WriteLine($"It deals {damage} damage!");
+            _presenter.ShowAbilityUse(actor.Value.Name, ability.Value.Name, target.Name, damage);
             if (target.IsDefeated)
-                console.WriteLine($"{target.Name} has been defeated!");
+                _presenter.ShowDefeat(target.Name);
         }
     }
 }

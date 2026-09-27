@@ -8,7 +8,7 @@ namespace Cli.Text
     /// </summary>
     public sealed class TextNavigator
     {
-        private readonly TextDocument _document;
+        private TextDocument _document;
         private readonly Stack<Section> _path = new();
         private int _idCounter;
 
@@ -20,7 +20,22 @@ namespace Cli.Text
         {
             ArgumentNullException.ThrowIfNull(document);
             _document = document;
+            _idCounter = MaxUsedId(document.Elements);
             EnsureIds(_document.Elements);
+        }
+
+        /// <summary>
+        /// Replaces the explored document, resets the position to the root
+        /// and continues numbering after the loaded ids.
+        /// </summary>
+        /// <param name="document">The document to explore.</param>
+        public void ReplaceDocument(TextDocument document)
+        {
+            ArgumentNullException.ThrowIfNull(document);
+            _document = document;
+            _path.Clear();
+            _idCounter = MaxUsedId(document.Elements);
+            EnsureIds(document.Elements);
         }
 
         /// <summary>
@@ -225,6 +240,25 @@ namespace Cli.Text
                 if (element is Section section)
                     EnsureIds(section.Children);
             }
+        }
+
+        /// <summary>
+        /// Finds the highest numeric suffix of stored e-number ids.
+        /// </summary>
+        /// <param name="elements">The elements to scan.</param>
+        /// <returns>The maximum suffix, or zero when none.</returns>
+        private static int MaxUsedId(IEnumerable<TextElement> elements)
+        {
+            int max = 0;
+            foreach (TextElement element in elements)
+            {
+                if (element.Id.StartsWith("e", StringComparison.OrdinalIgnoreCase) &&
+                    int.TryParse(element.Id[1..], out int n) && n > max)
+                    max = n;
+                if (element is Section section)
+                    max = Math.Max(max, MaxUsedId(section.Children));
+            }
+            return max;
         }
 
         /// <summary>

@@ -11,6 +11,7 @@ namespace Cli.Chars
     public sealed class CreateCommand : IShellCommand
     {
         private readonly CharsWorld _world;
+        private readonly CharsPresenter _presenter;
 
         /// <summary>
         /// Gets the command verb.
@@ -28,21 +29,24 @@ namespace Cli.Chars
         public string Usage => "create <char|item|ability>";
 
         /// <summary>
-        /// Initializes a create command bound to the given world.
+        /// Initializes a create command bound to the given world and presenter.
         /// </summary>
         /// <param name="world">The characters world.</param>
-        public CreateCommand(CharsWorld world)
+        /// <param name="presenter">The characters presenter.</param>
+        public CreateCommand(CharsWorld world, CharsPresenter presenter)
         {
             ArgumentNullException.ThrowIfNull(world);
+            ArgumentNullException.ThrowIfNull(presenter);
             _world = world;
+            _presenter = presenter;
         }
 
         /// <summary>
         /// Runs the creation dialog for the requested category.
         /// </summary>
-        /// <param name="console">The console for input and output.</param>
+        /// <param name="display">The display for dialog input.</param>
         /// <param name="command">The parsed command line.</param>
-        public void Execute(IDisplay console, ParsedCommand command)
+        public void Execute(IDisplay display, ParsedCommand command)
         {
             command.ExpectArgCount(1, 1, Usage);
             command.ExpectOptions(Usage);
@@ -50,13 +54,13 @@ namespace Cli.Chars
             switch (kind.ToLowerInvariant())
             {
                 case "char":
-                    CreateCharacter(console);
+                    CreateCharacter(display);
                     break;
                 case "item":
-                    CreateItem(console);
+                    CreateItem(display);
                     break;
                 case "ability":
-                    CreateAbility(console);
+                    CreateAbility(display);
                     break;
                 default:
                     throw new CommandException($"Unknown category '{kind}'. Use char, item or ability.");
@@ -66,49 +70,49 @@ namespace Cli.Chars
         /// <summary>
         /// Runs the character creation dialog.
         /// </summary>
-        /// <param name="console">The console for input and output.</param>
-        private void CreateCharacter(IDisplay console)
+        /// <param name="display">The display for dialog input.</param>
+        private void CreateCharacter(IDisplay display)
         {
-            string name = Prompter.ReadRequired(console, "Name");
-            int maxHealth = Prompter.ReadInt(console, "MaxHealth", 1, 10000);
-            int armor = Prompter.ReadInt(console, "BaseArmor", 0, 1000);
-            int attack = Prompter.ReadInt(console, "BaseAttack", 0, 10000);
-            string? id = Prompter.ReadOptional(console, "Id (empty for auto)");
+            string name = Prompter.ReadRequired(display, "Name");
+            int maxHealth = Prompter.ReadInt(display, "MaxHealth", 1, 10000);
+            int armor = Prompter.ReadInt(display, "BaseArmor", 0, 1000);
+            int attack = Prompter.ReadInt(display, "BaseAttack", 0, 10000);
+            string? id = Prompter.ReadOptional(display, "Id (empty for auto)");
 
             var character = new Character(name, maxHealth, armor, attack);
             string assigned = _world.Characters.Add(character, id);
-            console.WriteLine($"Created character '{name}' [{assigned}] ({maxHealth} HP, {armor} ARM, {attack} ATK).");
+            _presenter.ShowCharacterCreated(assigned, name, maxHealth, armor, attack);
         }
 
         /// <summary>
         /// Runs the item creation dialog.
         /// </summary>
-        /// <param name="console">The console for input and output.</param>
-        private void CreateItem(IDisplay console)
+        /// <param name="display">The display for dialog input.</param>
+        private void CreateItem(IDisplay display)
         {
-            string name = Prompter.ReadRequired(console, "Name");
-            int attack = Prompter.ReadInt(console, "AttackBonus", 0, 10000);
-            int armor = Prompter.ReadInt(console, "ArmorBonus", 0, 10000);
-            string? id = Prompter.ReadOptional(console, "Id (empty for auto)");
+            string name = Prompter.ReadRequired(display, "Name");
+            int attack = Prompter.ReadInt(display, "AttackBonus", 0, 10000);
+            int armor = Prompter.ReadInt(display, "ArmorBonus", 0, 10000);
+            string? id = Prompter.ReadOptional(display, "Id (empty for auto)");
 
             var item = new Equipment(name, attack, armor);
             string assigned = _world.Items.Add(item, id);
-            console.WriteLine($"Created item '{name}' [{assigned}] (+{attack} ATK, +{armor} ARM).");
+            _presenter.ShowItemCreated(assigned, name, attack, armor);
         }
 
         /// <summary>
         /// Runs the ability creation dialog.
         /// </summary>
-        /// <param name="console">The console for input and output.</param>
-        private void CreateAbility(IDisplay console)
+        /// <param name="display">The display for dialog input.</param>
+        private void CreateAbility(IDisplay display)
         {
-            string name = Prompter.ReadRequired(console, "Name");
-            int multiplier = Prompter.ReadInt(console, "DamageMultiplier", 1, 100);
-            string? id = Prompter.ReadOptional(console, "Id (empty for auto, must be free)");
+            string name = Prompter.ReadRequired(display, "Name");
+            int multiplier = Prompter.ReadInt(display, "DamageMultiplier", 1, 100);
+            string? id = Prompter.ReadOptional(display, "Id (empty for auto, must be free)");
 
             var ability = new Ability(name, multiplier);
             string assigned = _world.Abilities.Add(ability, id);
-            console.WriteLine($"Created ability '{name}' [{assigned}] (x{multiplier}).");
+            _presenter.ShowAbilityCreated(assigned, name, multiplier);
         }
     }
 }

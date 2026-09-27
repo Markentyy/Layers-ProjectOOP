@@ -58,6 +58,17 @@ namespace Cli.Chars
         }
 
         /// <summary>
+        /// Removes every character, item, ability and book entry.
+        /// </summary>
+        public void Clear()
+        {
+            Characters.Clear();
+            Items.Clear();
+            Abilities.Clear();
+            _books.Clear();
+        }
+
+        /// <summary>
         /// Resolves a character by id or name.
         /// </summary>
         /// <param name="idOrName">The id or the name.</param>

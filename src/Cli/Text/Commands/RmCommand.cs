@@ -12,6 +12,7 @@ namespace Cli.Text
     public sealed class RmCommand : IShellCommand
     {
         private readonly TextNavigator _navigator;
+        private readonly TextPresenter _presenter;
 
         /// <summary>
         /// Gets the command verb.
@@ -29,27 +30,30 @@ namespace Cli.Text
         public string Usage => "rm [<elem_name>]";
 
         /// <summary>
-        /// Initializes a remove command bound to the given navigator.
+        /// Initializes a remove command bound to the given navigator and presenter.
         /// </summary>
         /// <param name="navigator">The text navigator.</param>
-        public RmCommand(TextNavigator navigator)
+        /// <param name="presenter">The text presenter.</param>
+        public RmCommand(TextNavigator navigator, TextPresenter presenter)
         {
             ArgumentNullException.ThrowIfNull(navigator);
+            ArgumentNullException.ThrowIfNull(presenter);
             _navigator = navigator;
+            _presenter = presenter;
         }
 
         /// <summary>
         /// Confirms and performs the removal.
         /// </summary>
-        /// <param name="console">The console for input and output.</param>
+        /// <param name="display">The display for dialog input.</param>
         /// <param name="command">The parsed command line.</param>
-        public void Execute(IDisplay console, ParsedCommand command)
+        public void Execute(IDisplay display, ParsedCommand command)
         {
             command.ExpectArgCount(0, 1, Usage);
             command.ExpectOptions(Usage);
             if (command.Args.Count == 0)
             {
-                RemoveCurrent(console);
+                RemoveCurrent(display);
                 return;
             }
 
@@ -61,25 +65,25 @@ namespace Cli.Text
                 throw new CommandException($"Ambiguous name '{name}': {found.Count} matches.");
 
             TextElement element = found[0];
-            if (!Prompter.ReadYesNo(console, $"Delete '{element.DisplayName}' [{element.Id}]"))
+            if (!Prompter.ReadYesNo(display, $"Delete '{element.DisplayName}' [{element.Id}]"))
                 return;
             _navigator.RemoveFromCurrent(element);
-            console.WriteLine($"Removed '{element.DisplayName}'.");
+            _presenter.ShowRemoved(element.DisplayName);
         }
 
         /// <summary>
         /// Confirms and removes the current container, then moves to its parent.
         /// </summary>
-        /// <param name="console">The console for input and output.</param>
-        private void RemoveCurrent(IDisplay console)
+        /// <param name="display">The display for dialog input.</param>
+        private void RemoveCurrent(IDisplay display)
         {
             if (_navigator.IsRoot)
                 throw new CommandException("Nothing selected: the current position is the document root.");
             string title = _navigator.CurrentTitle;
-            if (!Prompter.ReadYesNo(console, $"Delete current section '{title}' and go up"))
+            if (!Prompter.ReadYesNo(display, $"Delete current section '{title}' and go up"))
                 return;
             Section removed = _navigator.RemoveCurrent();
-            console.WriteLine($"Removed '{removed.DisplayName}'. Current: {_navigator.Pwd()}.");
+            _presenter.ShowRemovedCurrent(removed.DisplayName, _navigator.Pwd());
         }
     }
 }
