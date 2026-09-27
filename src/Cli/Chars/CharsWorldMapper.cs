@@ -97,6 +97,8 @@ namespace Cli.Chars
                     character.RestoreState(state.Health, state.IsDefending);
                     foreach (string itemId in state.ItemIds)
                     {
+                        if (!world.Items.ContainsId(itemId))
+                            throw new ArgumentException($"Unknown item id '{itemId}'.");
                         character.Equip(world.Items.GetById(itemId));
                     }
                     foreach (string abilityId in state.AbilityIds)
