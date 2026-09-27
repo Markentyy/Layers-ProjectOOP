@@ -1,0 +1,33 @@
+create char
+A
+100
+5
+15
+
+create item
+S
+5
+0
+
+create ability
+F
+2
+
+add --char_id char-1 --id item-1
+add --char_id char-1 --id ability-1
+act attack char-1 char-1
+save demo/saves/chars.json
+ls char
+create char
+B
+50
+0
+1
+
+ls char
+load demo/saves/chars.json
+ls char
+ls char --id char-1
+load demo/saves/missing.json
+load demo/chars-demo.txt
+exit

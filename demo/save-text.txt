@@ -1,0 +1,12 @@
+cd oop
+add leaf paragraph
+Temp note.
+save demo/saves/text.json
+rm "Temp note."
+y
+print --whole
+load demo/saves/text.json
+pwd
+print --whole
+load demo/saves/missing.json
+exit
