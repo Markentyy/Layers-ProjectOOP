@@ -1,0 +1,37 @@
+create char
+Arthur
+100
+5
+15
+
+create char
+Merlin
+70
+2
+25
+mage
+create item
+Staff of Fire
+10
+0
+staff
+create ability
+Fireball
+2
+
+ls char
+ls item
+ls ability
+add --char_id Merlin --id staff
+add --char_id mage --id ability-1
+add --char_id Arthur --id staff
+ls char --id char-1
+act attack Merlin Arthur
+act attack Arthur Merlin
+act attack Merlin Arthur extra
+act heal Merlin Merlin --amount 5
+act ability mage Arthur --id Fireball
+ls char
+act attack nope Arthur
+ls potion
+exit

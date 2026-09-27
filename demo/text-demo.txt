@@ -1,0 +1,30 @@
+pwd
+pwd extra
+print
+print --id
+cd oop
+pwd
+print
+cd pillars
+print --id
+up
+pwd
+cd --id e4
+pwd
+print --whole
+add leaf paragraph
+A new leaf paragraph for the demo.
+cd /oop
+add container section
+appendix
+cd appendix
+pwd
+print
+cd /oop
+rm appendix
+y
+pwd
+print --whole
+cd nowhere
+up
+exit

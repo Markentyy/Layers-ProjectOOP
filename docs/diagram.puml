@@ -1,0 +1,180 @@
+@startuml ShellDiagram
+' Class diagram of the Shell-ProjectOOP command interface.
+' Rendered with the built-in smetana engine (no Graphviz needed).
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+namespace Shell.GameSystem {
+  class Character {
+    + Name : string <<get>>
+    + Health : int <<get>>
+    + Attack(target : Character) : int
+    + Heal(amount : int) : void
+    + Defend() : void
+    + UseAbility(ability : IAbility, target : Character) : int
+    + Equip(item : Equipment) : void
+  }
+  class Equipment {
+    + Name : string <<get>>
+    + AttackBonus : int <<get>>
+    + ArmorBonus : int <<get>>
+  }
+  class Inventory {
+    + Items : IReadOnlyList<Equipment> <<get>>
+    + Add(item : Equipment) : void
+  }
+  interface IAbility {
+    + Name : string <<get>>
+    + Use(user : Character, target : Character) : int
+  }
+  class Ability {
+    + DamageMultiplier : int <<get>>
+    + Use(user : Character, target : Character) : int
+  }
+  class CombatResolver {
+    + CalculateDamage(attack : int, armor : int) : int {static}
+    + CalculateAbilityDamage(attack : int, mult : int) : int {static}
+  }
+}
+
+namespace Shell.TextSystem {
+  interface ITextElement {
+    + Render() : string
+  }
+  abstract class TextElement {
+    + Id : string
+    + DisplayName : string
+    + Render() : string {abstract}
+    + CollectTableOfContents(entries : list, depth : int) : void
+  }
+  class Heading {
+    + Level : int <<get>>
+    + Text : string <<get>>
+  }
+  class Paragraph {
+    + Content : string <<get>>
+  }
+  class Link {
+    + DisplayText : string <<get>>
+    + Url : string <<get>>
+  }
+  class Section {
+    + Title : string <<get>>
+    + Children : IReadOnlyList<TextElement> <<get>>
+    + AddChild(element : TextElement) : void
+    + RemoveChild(element : TextElement) : bool
+  }
+  class TextDocument {
+    + Elements : IReadOnlyList<TextElement> <<get>>
+    + AddElement(element : TextElement) : void
+    + RenderDocument() : string
+    + RenderTableOfContents() : string
+  }
+}
+
+namespace Shell.Cli {
+  interface IConsole {
+    + Write(message : string) : void
+    + WriteLine(message : string) : void
+    + ReadLine() : string
+  }
+  class SystemConsole {
+}
+
+namespace Shell.Chars {
+  class Registry {
+    + Add(item : T, customId : string) : string
+    + Resolve helpers
+  }
+  class CharsWorld {
+    + Characters : Registry
+    + Items : Registry
+    + Abilities : Registry
+    + Learn(charId : string, abilityId : string) : bool
+  }
+  class CreateCommand {
+}
+
+namespace Shell.Text {
+  class TextNavigator {
+    + Pwd() : string
+    + Cd(path : string) : void
+    + CdById(id : string) : void
+    + Up() : void
+    + AddToCurrent(element : TextElement) : void
+    + RemoveCurrent() : Section
+  }
+  class TextSeed {
+}
+
+Shell.GameSystem.Character "1" *-- "1" Shell.GameSystem.Inventory : owns
+Shell.GameSystem.Inventory "1" o-- "0..*" Shell.GameSystem.Equipment : carries
+Shell.GameSystem.Character ..> Shell.GameSystem.CombatResolver : math
+Shell.GameSystem.Ability ..> Shell.GameSystem.CombatResolver : math
+Shell.GameSystem.Ability ..|> Shell.GameSystem.IAbility : realizes
+Shell.GameSystem.Character ..> Shell.GameSystem.IAbility : uses
+
+Shell.TextSystem.TextElement ..|> Shell.TextSystem.ITextElement : realizes
+Shell.TextSystem.Heading --|> Shell.TextSystem.TextElement : inherits
+Shell.TextSystem.Paragraph --|> Shell.TextSystem.TextElement : inherits
+Shell.TextSystem.Link --|> Shell.TextSystem.TextElement : inherits
+Shell.TextSystem.Section --|> Shell.TextSystem.TextElement : inherits
+Shell.TextSystem.Section "1" o-- "0..*" Shell.TextSystem.TextElement : contains
+Shell.TextSystem.TextDocument "1" o-- "0..*" Shell.TextSystem.TextElement : contains
+
+Shell.Cli.SystemConsole ..|> Shell.Cli.IConsole : realizes
+Shell.Cli.HelpCommand ..|> Shell.Cli.IShellCommand : realizes
+Shell.Cli.LineParser ..> Shell.Cli.ParsedCommand : creates
+Shell.Cli.Repl ..> Shell.Cli.CommandSet : dispatches
+Shell.Cli.Repl ..> Shell.Cli.IShellCommand : executes
+Shell.Cli.Prompter ..> Shell.Cli.IConsole : dialogs
+
+Shell.Chars.CharsWorld "1" *-- "3" Shell.Chars.Registry : owns
+Shell.Chars.CharsWorld --> Shell.GameSystem.Character : stores
+Shell.Chars.CharsWorld --> Shell.GameSystem.Equipment : stores
+Shell.Chars.CharsWorld --> Shell.GameSystem.Ability : stores
+Shell.Chars.CreateCommand ..|> Shell.Cli.IShellCommand : realizes
+Shell.Chars.AddCommand ..|> Shell.Cli.IShellCommand : realizes
+Shell.Chars.ActCommand ..|> Shell.Cli.IShellCommand : realizes
+Shell.Chars.LsCommand ..|> Shell.Cli.IShellCommand : realizes
+Shell.Chars.CreateCommand --> Shell.Chars.CharsWorld : edits
+Shell.Chars.AddCommand --> Shell.Chars.CharsWorld : edits
+Shell.Chars.ActCommand --> Shell.Chars.CharsWorld : edits
+Shell.Chars.LsCommand --> Shell.Chars.CharsWorld : reads
+
+Shell.Text.TextNavigator "1" --> "1" Shell.TextSystem.TextDocument : explores
+Shell.Text.TextNavigator --> Shell.TextSystem.Section : positions
+Shell.Text.TextSeed ..> Shell.TextSystem.TextDocument : seeds
+Shell.Text.PwdCommand ..|> Shell.Cli.IShellCommand : realizes
+Shell.Text.PrintCommand ..|> Shell.Cli.IShellCommand : realizes
+Shell.Text.TAddCommand ..|> Shell.Cli.IShellCommand : realizes
+Shell.Text.RmCommand ..|> Shell.Cli.IShellCommand : realizes
+Shell.Text.UpCommand ..|> Shell.Cli.IShellCommand : realizes
+Shell.Text.CdCommand ..|> Shell.Cli.IShellCommand : realizes
+Shell.Text.PwdCommand --> Shell.Text.TextNavigator : reads
+Shell.Text.PrintCommand --> Shell.Text.TextNavigator : reads
+Shell.Text.TAddCommand --> Shell.Text.TextNavigator : edits
+Shell.Text.RmCommand --> Shell.Text.TextNavigator : edits
+Shell.Text.UpCommand --> Shell.Text.TextNavigator : edits
+Shell.Text.CdCommand --> Shell.Text.TextNavigator : edits
+
+note top of Shell.Cli.IShellCommand
+  OCP: a new terminal command is one
+  class plus one Add() line. The REPL
+  never changes.
+end note
+
+note bottom of Shell.Text.TextNavigator
+  Navigation state (position, ids)
+  lives here, not in the domain.
+  The domain stays UI-free (SRP).
+end note
+
+' Vertical layout: one package per row, portrait figure for A4.
+Shell.Cli.Repl -[hidden]down- Shell.Chars.CharsWorld
+Shell.Chars.CharsWorld -[hidden]down- Shell.Text.TextNavigator
+Shell.Text.TextNavigator -[hidden]down- Shell.GameSystem.Character
+Shell.GameSystem.Character -[hidden]down- Shell.TextSystem.TextDocument
+@enduml
