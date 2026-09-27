@@ -80,7 +80,7 @@ namespace Cli.Chars
             string? id = Prompter.ReadOptional(display, "Id (empty for auto)");
 
             var character = new Character(name, maxHealth, armor, attack);
-            string assigned = _world.Characters.Add(character, id);
+            string assigned = _world.AddCharacter(character, id);
             _presenter.ShowCharacterCreated(assigned, name, maxHealth, armor, attack);
         }
 
@@ -96,7 +96,7 @@ namespace Cli.Chars
             string? id = Prompter.ReadOptional(display, "Id (empty for auto)");
 
             var item = new Equipment(name, attack, armor);
-            string assigned = _world.Items.Add(item, id);
+            string assigned = _world.AddItem(item, id);
             _presenter.ShowItemCreated(assigned, name, attack, armor);
         }
 
@@ -111,7 +111,7 @@ namespace Cli.Chars
             string? id = Prompter.ReadOptional(display, "Id (empty for auto, must be free)");
 
             var ability = new Ability(name, multiplier);
-            string assigned = _world.Abilities.Add(ability, id);
+            string assigned = _world.AddAbility(ability, id);
             _presenter.ShowAbilityCreated(assigned, name, multiplier);
         }
     }

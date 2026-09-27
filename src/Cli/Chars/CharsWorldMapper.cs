@@ -82,18 +82,18 @@ namespace Cli.Chars
 
                 foreach (ItemState state in snapshot.Items)
                 {
-                    world.Items.Add(new Equipment(state.Name, state.AttackBonus, state.ArmorBonus), state.Id);
+                    world.AddItem(new Equipment(state.Name, state.AttackBonus, state.ArmorBonus), state.Id);
                 }
 
                 foreach (AbilityState state in snapshot.Abilities)
                 {
-                    world.Abilities.Add(new Ability(state.Name, state.DamageMultiplier), state.Id);
+                    world.AddAbility(new Ability(state.Name, state.DamageMultiplier), state.Id);
                 }
 
                 foreach (CharacterState state in snapshot.Characters)
                 {
                     var character = new Character(state.Name, state.MaxHealth, state.BaseArmor, state.BaseAttack);
-                    string id = world.Characters.Add(character, state.Id);
+                    string id = world.AddCharacter(character, state.Id);
                     character.RestoreState(state.Health, state.IsDefending);
                     foreach (string itemId in state.ItemIds)
                     {

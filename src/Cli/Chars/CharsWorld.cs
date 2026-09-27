@@ -69,6 +69,60 @@ namespace Cli.Chars
         }
 
         /// <summary>
+        /// Checks whether the id is taken in any registry.
+        /// </summary>
+        /// <param name="id">The id to check.</param>
+        /// <returns>True when the id is already used.</returns>
+        public bool IsIdTaken(string id) =>
+            Characters.ContainsId(id) || Items.ContainsId(id) || Abilities.ContainsId(id);
+
+        /// <summary>
+        /// Adds a character, keeping its id unique across all registries.
+        /// </summary>
+        /// <param name="character">The character to store.</param>
+        /// <param name="customId">The requested id, or null for an auto id.</param>
+        /// <returns>The assigned id.</returns>
+        public string AddCharacter(Character character, string? customId = null)
+        {
+            RequireFreeId(customId);
+            return Characters.Add(character, customId);
+        }
+
+        /// <summary>
+        /// Adds an item, keeping its id unique across all registries.
+        /// </summary>
+        /// <param name="item">The item to store.</param>
+        /// <param name="customId">The requested id, or null for an auto id.</param>
+        /// <returns>The assigned id.</returns>
+        public string AddItem(Equipment item, string? customId = null)
+        {
+            RequireFreeId(customId);
+            return Items.Add(item, customId);
+        }
+
+        /// <summary>
+        /// Adds an ability, keeping its id unique across all registries.
+        /// </summary>
+        /// <param name="ability">The ability to store.</param>
+        /// <param name="customId">The requested id, or null for an auto id.</param>
+        /// <returns>The assigned id.</returns>
+        public string AddAbility(Ability ability, string? customId = null)
+        {
+            RequireFreeId(customId);
+            return Abilities.Add(ability, customId);
+        }
+
+        /// <summary>
+        /// Rejects a custom id that is already used anywhere.
+        /// </summary>
+        /// <param name="customId">The requested id, or null.</param>
+        private void RequireFreeId(string? customId)
+        {
+            if (!string.IsNullOrWhiteSpace(customId) && IsIdTaken(customId.Trim()))
+                throw new Engine.CommandException($"Id '{customId.Trim()}' is already taken.");
+        }
+
+        /// <summary>
         /// Resolves a character by id or name.
         /// </summary>
         /// <param name="idOrName">The id or the name.</param>
