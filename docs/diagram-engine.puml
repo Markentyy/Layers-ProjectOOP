@@ -1,0 +1,73 @@
+@startuml LayersEngine
+' Interpreter core: parser, commands registry, presenters, display.
+' Rendered with the built-in smetana engine (no Graphviz needed).
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+namespace Cli.Engine {
+  interface IShellCommand {
+    + Name : string <<get>>
+    + Usage : string <<get>>
+    + Execute(display : IDisplay, command : ParsedCommand) : void
+  }
+  class CommandSet {
+    + Add(command : IShellCommand) : void
+  }
+  class LineParser {
+    + Parse(line : string) : ParsedCommand {static}
+  }
+  class ParsedCommand {
+    + Verb : string <<get>>
+    + Args : list <<get>>
+  }
+  class Repl {
+    + Run(display : IDisplay, intro : string, commands : CommandSet) : void {static}
+  }
+}
+
+namespace Cli.Presenter {
+  class Prompter {
+    + ReadRequired(display : IDisplay, label : string) : string {static}
+    + ReadInt(display : IDisplay, label : string, min : int, max : int) : int {static}
+    + ReadYesNo(display : IDisplay, label : string) : bool {static}
+  }
+  class CharsPresenter {
+    + ShowAttack / ShowHeal / ShowAbilityUse
+    + ShowCharacterDetail / ShowItemDetail
+  }
+  class TextPresenter {
+    + ShowPath / ShowMoved / ShowText
+    + ShowCreated / ShowRemoved
+  }
+}
+
+namespace Infra.Display {
+  interface IDisplay {
+    + Write(message : string) : void
+    + WriteLine(message : string) : void
+    + ReadLine() : string
+  }
+  class ConsoleDisplay {
+  }
+}
+
+note top of Cli.Engine.IShellCommand
+  OCP: a new command is one class
+  plus one Add() line.
+end note
+
+note bottom of Cli.Presenter.CharsPresenter
+  All formatting lives here.
+  Commands never touch strings.
+end note
+
+Infra.Display.ConsoleDisplay ..|> Infra.Display.IDisplay : realizes
+Cli.Engine.Repl ..> Cli.Engine.CommandSet : dispatches
+Cli.Engine.Repl ..> Cli.Engine.IShellCommand : executes
+Cli.Engine.LineParser ..> Cli.Engine.ParsedCommand : creates
+Cli.Presenter.Prompter ..> Infra.Display.IDisplay : reads
+Cli.Presenter.CharsPresenter ..> Infra.Display.IDisplay : writes
+Cli.Presenter.TextPresenter ..> Infra.Display.IDisplay : writes
+@enduml

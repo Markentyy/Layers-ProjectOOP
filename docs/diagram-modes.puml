@@ -1,0 +1,124 @@
+@startuml LayersModes
+' Modes and persistence: worlds, mappers, commands, stores.
+' Rendered with the built-in smetana engine (no Graphviz needed).
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+namespace Infra.Data {
+  interface ICharsStore {
+    + Save(snapshot : CharsSnapshot, path : string) : void
+    + Load(path : string) : CharsSnapshot
+  }
+  class JsonCharsStore {
+  }
+  interface ITextStore {
+    + Save(snapshot : TextSnapshot, path : string) : void
+    + Load(path : string) : TextSnapshot
+  }
+  class JsonTextStore {
+  }
+  class CharsSnapshot {
+  }
+  class TextSnapshot {
+  }
+}
+
+namespace Cli.Chars {
+  class Registry {
+    + Add(item : T, customId : string) : string
+  }
+  class CharsWorld {
+    + Characters / Items / Abilities : Registry
+    + Learn(charId : string, abilityId : string) : bool
+  }
+  class CharsWorldMapper {
+    + ToSnapshot(world : CharsWorld) : CharsSnapshot {static}
+    + LoadInto(world : CharsWorld, snapshot : CharsSnapshot) : void {static}
+  }
+  class CreateCommand {
+  }
+  class AddCommand {
+  }
+  class ActCommand {
+  }
+  class LsCommand {
+  }
+  class SaveCommand {
+  }
+  class LoadCommand {
+  }
+}
+
+namespace Cli.Text {
+  class TextNavigator {
+    + Pwd() : string
+    + Cd(path : string) : void
+    + AddToCurrent(element : TextElement) : void
+    + ReplaceDocument(document : TextDocument) : void
+  }
+  class TextMapper {
+    + ToSnapshot(document : TextDocument) : TextSnapshot {static}
+    + ToDocument(snapshot : TextSnapshot) : TextDocument {static}
+  }
+  class PwdCommand {
+  }
+  class PrintCommand {
+  }
+  class TAddCommand as "AddCommand" {
+  }
+  class RmCommand {
+  }
+  class UpCommand {
+  }
+  class CdCommand {
+  }
+  class TSaveCommand as "SaveCommand" {
+  }
+  class TLoadCommand as "LoadCommand" {
+  }
+}
+
+note bottom of Infra.Data.ICharsStore
+  Replaceable persistence: commands
+  depend on the interface, JSON is
+  just one implementation.
+end note
+
+note "App/Program.cs wires everything:\ndisplay, stores, worlds, modes\n(composition root)" as AppNote
+
+Infra.Data.JsonCharsStore ..|> Infra.Data.ICharsStore : realizes
+Infra.Data.JsonTextStore ..|> Infra.Data.ITextStore : realizes
+Infra.Data.JsonCharsStore ..> Infra.Data.CharsSnapshot : writes
+Infra.Data.JsonTextStore ..> Infra.Data.TextSnapshot : writes
+Cli.Chars.CharsWorld "1" *-- "3" Cli.Chars.Registry : owns
+Cli.Chars.CharsWorldMapper ..> Cli.Chars.CharsWorld : maps
+Cli.Chars.CharsWorldMapper ..> Infra.Data.CharsSnapshot : maps
+Cli.Chars.CreateCommand --> Cli.Chars.CharsWorld : edits
+Cli.Chars.ActCommand --> Cli.Chars.CharsWorld : edits
+Cli.Chars.SaveCommand ..> Infra.Data.ICharsStore : persists
+Cli.Chars.LoadCommand ..> Infra.Data.ICharsStore : restores
+Cli.Text.TextMapper ..> Cli.Text.TextNavigator : rebuilds
+Cli.Text.TextMapper ..> Infra.Data.TextSnapshot : maps
+Cli.Text.TSaveCommand ..> Infra.Data.ITextStore : persists
+Cli.Text.TLoadCommand ..> Infra.Data.ITextStore : restores
+Cli.Chars.CreateCommand ..|> Cli.Engine.IShellCommand : realizes
+Cli.Chars.AddCommand ..|> Cli.Engine.IShellCommand : realizes
+Cli.Chars.ActCommand ..|> Cli.Engine.IShellCommand : realizes
+Cli.Chars.LsCommand ..|> Cli.Engine.IShellCommand : realizes
+Cli.Chars.SaveCommand ..|> Cli.Engine.IShellCommand : realizes
+Cli.Chars.LoadCommand ..|> Cli.Engine.IShellCommand : realizes
+Cli.Text.PwdCommand ..|> Cli.Engine.IShellCommand : realizes
+Cli.Text.PrintCommand ..|> Cli.Engine.IShellCommand : realizes
+Cli.Text.TAddCommand ..|> Cli.Engine.IShellCommand : realizes
+Cli.Text.RmCommand ..|> Cli.Engine.IShellCommand : realizes
+Cli.Text.UpCommand ..|> Cli.Engine.IShellCommand : realizes
+Cli.Text.CdCommand ..|> Cli.Engine.IShellCommand : realizes
+Cli.Text.TSaveCommand ..|> Cli.Engine.IShellCommand : realizes
+Cli.Text.TLoadCommand ..|> Cli.Engine.IShellCommand : realizes
+
+' Stack modes above infra.
+Cli.Text.TextNavigator -[hidden]down- Cli.Chars.CharsWorld
+Cli.Chars.CharsWorld -[hidden]down- Infra.Data.ICharsStore
+@enduml

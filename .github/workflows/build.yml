@@ -1,0 +1,54 @@
+name: build
+
+on:
+  push:
+  pull_request:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build
+        run: dotnet build Layers.sln --nologo
+
+      - name: Run characters demo and verify output
+        run: |
+          dotnet run --project src/App/App.csproj --no-build -- --chars < demo/chars-demo.txt > chars.txt
+          grep -q "Created character 'Arthur' \[char-1\]" chars.txt
+          grep -q "Merlin attacks Arthur for 30 damage!" chars.txt
+          grep -q "Arthur has been defeated!" chars.txt
+          grep -q "Wrong number of arguments" chars.txt
+          grep -q "Error: Unknown character 'nope'." chars.txt
+
+      - name: Run text demo and verify output
+        run: |
+          dotnet run --project src/App/App.csproj --no-build -- --text < demo/text-demo.txt > text.txt
+          grep -q "Current: /oop/pillars." text.txt
+          grep -q "Created Section 'appendix' \[e9\]" text.txt
+          grep -q "Removed 'appendix'." text.txt
+          grep -q "Wrong number of arguments" text.txt
+          grep -q "Error: No section 'nowhere' here." text.txt
+
+      - name: Run save and load roundtrips and verify output
+        run: |
+          dotnet run --project src/App/App.csproj --no-build -- --chars < demo/save-chars.txt > save-chars.txt
+          grep -q "Saved to 'demo/saves/chars.json'." save-chars.txt
+          grep -q "Loaded from 'demo/saves/chars.json': 1 characters, 1 items, 1 abilities." save-chars.txt
+          grep -q "HP: 85/100" save-chars.txt
+          dotnet run --project src/App/App.csproj --no-build -- --text < demo/save-text.txt > save-text.txt
+          grep -q "Removed 'Temp note.'" save-text.txt
+          grep -q "Loaded from 'demo/saves/text.json'." save-text.txt

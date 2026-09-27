@@ -1,0 +1,82 @@
+@startuml LayersCore
+' Core: game and text domains.
+' Rendered with the built-in smetana engine (no Graphviz needed).
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+namespace Core.GameSystem {
+  class Character {
+    + Name : string <<get>>
+    + Health : int <<get>>
+    + Attack(target : Character) : int
+    + Heal(amount : int) : void
+    + UseAbility(ability : IAbility, target : Character) : int
+    + Equip(item : Equipment) : void
+  }
+  class Equipment {
+    + Name : string <<get>>
+    + AttackBonus : int <<get>>
+    + ArmorBonus : int <<get>>
+  }
+  class Inventory {
+    + Items : IReadOnlyList<Equipment> <<get>>
+    + Add(item : Equipment) : void
+  }
+  interface IAbility {
+    + Name : string <<get>>
+    + Use(user : Character, target : Character) : int
+  }
+  class Ability {
+    + DamageMultiplier : int <<get>>
+  }
+  class CombatResolver {
+    + CalculateDamage(attack : int, armor : int) : int {static}
+  }
+}
+
+namespace Core.TextSystem {
+  interface ITextElement {
+    + Render() : string
+  }
+  abstract class TextElement {
+    + Id : string
+    + DisplayName : string
+    + Render() : string {abstract}
+  }
+  class Heading {
+    + Level : int <<get>>
+    + Text : string <<get>>
+  }
+  class Paragraph {
+    + Content : string <<get>>
+  }
+  class Link {
+    + DisplayText : string <<get>>
+    + Url : string <<get>>
+  }
+  class Section {
+    + Title : string <<get>>
+    + Children : IReadOnlyList<TextElement> <<get>>
+    + AddChild(element : TextElement) : void
+  }
+  class TextDocument {
+    + Elements : IReadOnlyList<TextElement> <<get>>
+    + RenderDocument() : string
+    + RenderTableOfContents() : string
+  }
+}
+
+Core.GameSystem.Character "1" *-- "1" Core.GameSystem.Inventory : owns
+Core.GameSystem.Inventory "1" o-- "0..*" Core.GameSystem.Equipment : carries
+Core.GameSystem.Character ..> Core.GameSystem.CombatResolver : math
+Core.GameSystem.Ability ..|> Core.GameSystem.IAbility : realizes
+Core.TextSystem.TextElement ..|> Core.TextSystem.ITextElement : realizes
+Core.TextSystem.Heading --|> Core.TextSystem.TextElement : inherits
+Core.TextSystem.Paragraph --|> Core.TextSystem.TextElement : inherits
+Core.TextSystem.Link --|> Core.TextSystem.TextElement : inherits
+Core.TextSystem.Section --|> Core.TextSystem.TextElement : inherits
+Core.TextSystem.Section "1" o-- "0..*" Core.TextSystem.TextElement : contains
+Core.TextSystem.TextDocument "1" o-- "0..*" Core.TextSystem.TextElement : contains
+@enduml
