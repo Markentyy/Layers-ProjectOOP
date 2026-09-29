@@ -1,10 +1,10 @@
 # Layers - шари CLI / Core / Infra
 
-![build](https://github.com/mvockob/Layers-ProjectOOP/actions/workflows/build.yml/badge.svg)
+![build](https://github.com/Markentyy/Layers-ProjectOOP/actions/workflows/build.yml/badge.svg)
 ![dotnet](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
 ![csharp](https://img.shields.io/badge/C%23-12-239120?logo=csharp&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-green)
-![last-commit](https://img.shields.io/github/last-commit/mvockob/Layers-ProjectOOP)
+![last-commit](https://img.shields.io/github/last-commit/Markentyy/Layers-ProjectOOP)
 
 Навчальний проєкт: той самий командний інтерфейс для персонажів і тексту,
 перекладений на шарувату структуру CLI / Core / Infra. Кожен шар - окремий
