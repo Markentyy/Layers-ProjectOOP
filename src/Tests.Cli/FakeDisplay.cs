@@ -63,5 +63,11 @@ namespace Tests.Cli
         /// <param name="text">The text to find.</param>
         /// <returns>True when found.</returns>
         public bool Shows(string text) => _lines.Any(l => l.Contains(text, StringComparison.Ordinal));
+
+        /// <summary>
+        /// Gets everything written so far, including the unflushed buffer.
+        /// </summary>
+        /// <returns>The full captured output.</returns>
+        public string AllOutput() => string.Join("\n", _lines) + _buffer.ToString();
     }
 }
