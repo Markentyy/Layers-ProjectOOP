@@ -11,30 +11,35 @@ namespace Tests.Core
         [InlineData(99, 6)]
         public void Heading_ClampsLevel(int level, int expected)
         {
+            // Act & Assert
             Assert.Equal(expected, new Heading(level, "T").Level);
         }
 
         [Fact]
         public void Heading_RendersMarkdown()
         {
+            // Act & Assert
             Assert.Equal("\n## Hi\n", new Heading(2, "Hi").Render());
         }
 
         [Fact]
         public void Paragraph_RendersWithNewline()
         {
+            // Act & Assert
             Assert.Equal("Body\n", new Paragraph("Body").Render());
         }
 
         [Fact]
         public void Link_RendersMarkdown()
         {
+            // Act & Assert
             Assert.Equal("[L](http://x.io)", new Link("L", "http://x.io").Render());
         }
 
         [Fact]
         public void DisplayNames_MatchLookupText()
         {
+            // Act & Assert
             Assert.Equal("T", new Heading(1, "T").DisplayName);
             Assert.Equal("Body", new Paragraph("Body").DisplayName);
             Assert.Equal("L", new Link("L", "http://x.io").DisplayName);
@@ -45,12 +50,15 @@ namespace Tests.Core
         [Fact]
         public void Section_RendersTitleAndChildren()
         {
+            // Arrange
             Section section = new("Sec");
             section.AddChild(new Heading(1, "H"));
             section.AddChild(new Paragraph("P"));
 
+            // Act
             string text = section.Render();
 
+            // Assert
             Assert.Contains("# Sec", text);
             Assert.Contains("# H", text);
             Assert.Contains("P", text);
@@ -59,10 +67,12 @@ namespace Tests.Core
         [Fact]
         public void Section_RemoveChild()
         {
+            // Arrange
             Section section = new("Sec");
             Paragraph child = new("P");
             section.AddChild(child);
 
+            // Act & Assert
             Assert.True(section.RemoveChild(child));
             Assert.False(section.RemoveChild(child));
             Assert.Equal(0, section.Count);

@@ -34,13 +34,16 @@ namespace Tests.Infra
         [Fact]
         public void SaveLoad_RoundtripsTree()
         {
+            // Arrange
             JsonTextStore store = new();
             string path = Path.Combine(_dir, "text.json");
             Directory.CreateDirectory(_dir);
 
+            // Act
             store.Save(Sample(), path);
             TextSnapshot loaded = store.Load(path);
 
+            // Assert
             TextNode root = Assert.Single(loaded.Roots);
             Assert.Equal("section", root.Kind);
             Assert.Equal("Root", root.Title);
@@ -53,19 +56,23 @@ namespace Tests.Infra
         [Fact]
         public void Load_MissingFile_ThrowsStoreException()
         {
+            // Arrange
             JsonTextStore store = new();
 
+            // Act & Assert
             Assert.Throws<StoreException>(() => store.Load(Path.Combine(_dir, "nope.json")));
         }
 
         [Fact]
         public void Load_WrongTypeFile_ThrowsStoreException()
         {
+            // Arrange
             JsonTextStore store = new();
             Directory.CreateDirectory(_dir);
             string path = Path.Combine(_dir, "bad.json");
             File.WriteAllText(path, "just a string");
 
+            // Act & Assert
             Assert.Throws<StoreException>(() => store.Load(path));
         }
     }

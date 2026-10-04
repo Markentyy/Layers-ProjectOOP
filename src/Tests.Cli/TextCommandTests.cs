@@ -33,12 +33,15 @@ namespace Tests.Cli
         [Fact]
         public void Pwd_PrintsPath()
         {
+            // Arrange
             (TextNavigator nav, FakeDisplay display, TextPresenter presenter) = Setup();
 
+            // Act
             new PwdCommand(nav, presenter).Execute(display, Cmd("pwd"));
             nav.Cd("oop");
             new PwdCommand(nav, presenter).Execute(display, Cmd("pwd"));
 
+            // Assert
             Assert.True(display.Shows("/"));
             Assert.True(display.Shows("/oop"));
         }
@@ -46,12 +49,15 @@ namespace Tests.Cli
         [Fact]
         public void Print_RendersCurrent_AndWholeWithIds()
         {
+            // Arrange
             (TextNavigator nav, FakeDisplay display, TextPresenter presenter) = Setup();
             PrintCommand print = new(nav, presenter);
 
+            // Act
             print.Execute(display, Cmd("print"));
             print.Execute(display, Cmd("print --whole --id"));
 
+            // Assert
             Assert.Contains("# oop", display.AllOutput());
             Assert.Contains("[e1] oop (Section)", display.AllOutput());
         }
@@ -59,12 +65,15 @@ namespace Tests.Cli
         [Fact]
         public void Add_CreatesSectionAndLeaf()
         {
+            // Arrange
             (TextNavigator nav, FakeDisplay display, TextPresenter presenter) = Setup("Docs", "2", "Note", "Body");
             AddCommand add = new(nav, presenter);
 
+            // Act
             add.Execute(display, Cmd("add container section"));
             add.Execute(display, Cmd("add leaf heading"));
 
+            // Assert
             Assert.True(display.Shows("Created Section 'Docs' [e3]"));
             Assert.True(display.Shows("Created Heading 'Note' [e4]"));
             Assert.Equal(3, nav.CurrentChildren.Count);
@@ -73,9 +82,11 @@ namespace Tests.Cli
         [Fact]
         public void Add_UnknownKindOrType_Throws()
         {
+            // Arrange
             (TextNavigator nav, FakeDisplay display, TextPresenter presenter) = Setup();
             AddCommand add = new(nav, presenter);
 
+            // Act & Assert
             Assert.Throws<CommandException>(() => add.Execute(display, Cmd("add box section")));
             Assert.Throws<CommandException>(() => add.Execute(display, Cmd("add leaf table")));
             Assert.Throws<CommandException>(() => add.Execute(display, Cmd("add container page")));
@@ -84,14 +95,17 @@ namespace Tests.Cli
         [Fact]
         public void Rm_NamedChild_AsksConfirmation()
         {
+            // Arrange
             (TextNavigator nav, FakeDisplay displayYes, TextPresenter presenterYes) = Setup("y");
             (TextNavigator nav2, FakeDisplay displayNo, TextPresenter presenterNo) = Setup("n");
             foreach (TextNavigator n in new[] { nav, nav2 })
                 n.AddToCurrent(new Paragraph("Temp"));
 
+            // Act
             new RmCommand(nav, presenterYes).Execute(displayYes, Cmd("rm Temp"));
             new RmCommand(nav2, presenterNo).Execute(displayNo, Cmd("rm Temp"));
 
+            // Assert
             Assert.True(displayYes.Shows("Removed 'Temp'."));
             Assert.False(displayNo.Shows("Removed"));
             Assert.Equal(2, nav2.CurrentChildren.Count);
@@ -100,11 +114,13 @@ namespace Tests.Cli
         [Fact]
         public void Rm_UnknownOrAmbiguous_Throws()
         {
+            // Arrange
             (TextNavigator nav, FakeDisplay display, TextPresenter presenter) = Setup();
             nav.AddToCurrent(new Paragraph("dup"));
             nav.AddToCurrent(new Paragraph("dup"));
             RmCommand rm = new(nav, presenter);
 
+            // Act & Assert
             Assert.Throws<CommandException>(() => rm.Execute(display, Cmd("rm nope")));
             Assert.Throws<CommandException>(() => rm.Execute(display, Cmd("rm dup")));
         }
@@ -112,11 +128,14 @@ namespace Tests.Cli
         [Fact]
         public void Rm_Current_RemovesSectionAndMovesUp()
         {
+            // Arrange
             (TextNavigator nav, FakeDisplay display, TextPresenter presenter) = Setup("y");
             nav.Cd("oop");
 
+            // Act
             new RmCommand(nav, presenter).Execute(display, Cmd("rm"));
 
+            // Assert
             Assert.True(display.Shows("Removed 'oop'. Current: /."));
             Assert.Equal("/", nav.Pwd());
         }
@@ -124,39 +143,48 @@ namespace Tests.Cli
         [Fact]
         public void Up_MovesAndReports()
         {
+            // Arrange
             (TextNavigator nav, FakeDisplay display, TextPresenter presenter) = Setup();
             nav.Cd("oop");
 
+            // Act
             new UpCommand(nav, presenter).Execute(display, Cmd("up"));
 
+            // Assert
             Assert.True(display.Shows("Current: /."));
         }
 
         [Fact]
         public void Cd_NavigatesByPathAndId()
         {
+            // Arrange
             (TextNavigator nav, FakeDisplay display, TextPresenter presenter) = Setup();
             CdCommand cd = new(nav, presenter);
 
+            // Act
             cd.Execute(display, Cmd("cd oop"));
             cd.Execute(display, Cmd("cd --id e1"));
 
+            // Assert
             Assert.True(display.Shows("Current: /oop."));
         }
 
         [Fact]
         public void SaveLoad_RoundtripsDocument()
         {
+            // Arrange
             (TextNavigator nav, FakeDisplay display, TextPresenter presenter) = Setup();
             Directory.CreateDirectory(_dir);
             string path = Path.Combine(_dir, "doc.json");
             JsonTextStore store = new();
             nav.AddToCurrent(new Paragraph("Keep me"));
 
+            // Act
             new SaveCommand(nav, store, presenter).Execute(display, Cmd($"save {path}"));
             nav.AddToCurrent(new Paragraph("Drop me"));
             new LoadCommand(nav, store, presenter).Execute(display, Cmd($"load {path}"));
 
+            // Assert
             Assert.True(display.Shows($"Saved to '{path}'."));
             Assert.True(display.Shows($"Loaded from '{path}'."));
             Assert.Equal("/", nav.Pwd());
@@ -167,8 +195,10 @@ namespace Tests.Cli
         [Fact]
         public void Load_MissingFile_ThrowsCommandError()
         {
+            // Arrange
             (TextNavigator nav, FakeDisplay display, TextPresenter presenter) = Setup();
 
+            // Act & Assert
             Assert.Throws<CommandException>(
                 () => new LoadCommand(nav, new JsonTextStore(), presenter).Execute(display, Cmd("load nope.json")));
         }

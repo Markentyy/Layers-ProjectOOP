@@ -23,8 +23,10 @@ namespace Tests.Cli
         [Fact]
         public void Pwd_TracksPosition()
         {
+            // Arrange
             TextNavigator nav = Seeded();
 
+            // Act & Assert
             Assert.Equal("/", nav.Pwd());
             nav.Cd("oop");
             Assert.Equal("/oop", nav.Pwd());
@@ -37,14 +39,17 @@ namespace Tests.Cli
         [Fact]
         public void Up_AtRoot_Throws()
         {
+            // Act & Assert
             Assert.Throws<CommandException>(() => Seeded().Up());
         }
 
         [Fact]
         public void Cd_AbsoluteRelativeParentDot()
         {
+            // Arrange
             TextNavigator nav = Seeded();
 
+            // Act & Assert
             nav.Cd("/oop/sub");
             Assert.Equal("/oop/sub", nav.Pwd());
             nav.Cd("..");
@@ -58,8 +63,10 @@ namespace Tests.Cli
         [Fact]
         public void Cd_UnknownOrLeaf_Throws()
         {
+            // Arrange
             TextNavigator nav = Seeded();
 
+            // Act & Assert
             Assert.Throws<CommandException>(() => nav.Cd("nope"));
             nav.Cd("oop");
             Assert.Throws<CommandException>(() => nav.Cd("H"));
@@ -68,24 +75,30 @@ namespace Tests.Cli
         [Fact]
         public void Cd_IsCaseInsensitive()
         {
+            // Arrange
             TextNavigator nav = Seeded();
 
+            // Act
             nav.Cd("OOP");
 
+            // Assert
             Assert.Equal("/oop", nav.Pwd());
         }
 
         [Fact]
         public void CdById_JumpsToContainer_RejectsLeafAndUnknown()
         {
+            // Arrange
             TextNavigator nav = Seeded();
             Section oop = Assert.IsType<Section>(nav.CurrentChildren[0]);
             Section sub = Assert.IsType<Section>(oop.Children[1]);
             Heading leaf = Assert.IsType<Heading>(oop.Children[0]);
 
+            // Act
             nav.CdById(sub.Id);
             Assert.Equal("/oop/sub", nav.Pwd());
 
+            // Assert
             Assert.Throws<CommandException>(() => nav.CdById(leaf.Id));
             Assert.Throws<CommandException>(() => nav.CdById("e999"));
         }
@@ -93,24 +106,30 @@ namespace Tests.Cli
         [Fact]
         public void AddToCurrent_NumbersWithoutCollisions()
         {
+            // Arrange
             TextNavigator nav = Seeded();
             nav.Cd("oop");
 
+            // Act
             nav.AddToCurrent(new Paragraph("New"));
 
+            // Assert
             Assert.Equal("e5", nav.CurrentChildren[2].Id);
         }
 
         [Fact]
         public void ReplaceDocument_ResetsPositionAndCounter()
         {
+            // Arrange
             TextNavigator nav = Seeded();
             nav.Cd("oop/sub");
 
+            // Act
             TextDocument fresh = new();
             fresh.AddElement(new Section("solo"));
             nav.ReplaceDocument(fresh);
 
+            // Assert
             Assert.Equal("/", nav.Pwd());
             nav.AddToCurrent(new Paragraph("P"));
             Assert.Equal("e2", nav.CurrentChildren[1].Id);
@@ -119,11 +138,14 @@ namespace Tests.Cli
         [Fact]
         public void RemoveCurrent_RemovesSectionAndMovesUp()
         {
+            // Arrange
             TextNavigator nav = Seeded();
             nav.Cd("oop");
 
+            // Act
             Section removed = nav.RemoveCurrent();
 
+            // Assert
             Assert.Equal("oop", removed.Title);
             Assert.Equal("/", nav.Pwd());
             Assert.Empty(nav.Document.Elements);
@@ -132,15 +154,18 @@ namespace Tests.Cli
         [Fact]
         public void RemoveCurrent_AtRoot_Throws()
         {
+            // Act & Assert
             Assert.Throws<CommandException>(() => Seeded().RemoveCurrent());
         }
 
         [Fact]
         public void FindInCurrent_MatchesDisplayName()
         {
+            // Arrange
             TextNavigator nav = Seeded();
             nav.Cd("oop");
 
+            // Act & Assert
             Assert.Single(nav.FindInCurrent("sub"));
             Assert.Single(nav.FindInCurrent("SUB"));
             Assert.Empty(nav.FindInCurrent("nope"));
@@ -149,11 +174,14 @@ namespace Tests.Cli
         [Fact]
         public void RenderCurrent_WithIds_MarksElements()
         {
+            // Arrange
             TextNavigator nav = Seeded();
             nav.Cd("oop/sub");
 
+            // Act
             string text = nav.RenderCurrent(true);
 
+            // Assert
             Assert.Contains("[e4]", text);
             Assert.Contains("(Paragraph)", text);
         }

@@ -32,13 +32,16 @@ namespace Tests.Infra
         [Fact]
         public void SaveLoad_RoundtripsAllFields()
         {
+            // Arrange
             JsonCharsStore store = new();
             string path = Path.Combine(_dir, "chars.json");
             Directory.CreateDirectory(_dir);
 
+            // Act
             store.Save(Sample(), path);
             CharsSnapshot loaded = store.Load(path);
 
+            // Assert
             Assert.True(File.Exists(path));
             CharacterState c = Assert.Single(loaded.Characters);
             Assert.Equal("char-1", c.Id);
@@ -53,27 +56,33 @@ namespace Tests.Infra
         [Fact]
         public void Load_MissingFile_ThrowsStoreException()
         {
+            // Arrange
             JsonCharsStore store = new();
 
+            // Act & Assert
             Assert.Throws<StoreException>(() => store.Load(Path.Combine(_dir, "nope.json")));
         }
 
         [Fact]
         public void Load_CorruptContent_ThrowsStoreException()
         {
+            // Arrange
             JsonCharsStore store = new();
             Directory.CreateDirectory(_dir);
             string path = Path.Combine(_dir, "bad.json");
             File.WriteAllText(path, "not json{{{");
 
+            // Act & Assert
             Assert.Throws<StoreException>(() => store.Load(path));
         }
 
         [Fact]
         public void Save_MissingDirectory_ThrowsStoreException()
         {
+            // Arrange
             JsonCharsStore store = new();
 
+            // Act & Assert
             Assert.Throws<StoreException>(() => store.Save(Sample(), Path.Combine(_dir, "nope", "x.json")));
         }
     }

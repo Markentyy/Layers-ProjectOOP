@@ -13,6 +13,7 @@ namespace Tests.Cli
         [Fact]
         public void CharsWorld_RoundtripsThroughSnapshot()
         {
+            // Arrange
             CharsWorld world = new();
             world.Characters.Add(new Character("A", 100, 5, 15), "a");
             world.Items.Add(new Equipment("S", 10, 0), "s");
@@ -21,11 +22,12 @@ namespace Tests.Cli
             world.Learn("a", "f");
             world.Characters.GetById("a").Attack(world.Characters.GetById("a"));
 
+            // Act
             CharsSnapshot snapshot = CharsWorldMapper.ToSnapshot(world);
-
             CharsWorld restored = new();
             CharsWorldMapper.LoadInto(restored, snapshot);
 
+            // Assert
             Character c = restored.ResolveCharacter("a").Value;
             Assert.Equal(80, c.Health);
             Assert.Equal(25, c.TotalAttack);
@@ -36,6 +38,7 @@ namespace Tests.Cli
         [Fact]
         public void CharsWorld_LoadInto_UnknownRef_ThrowsCommandError()
         {
+            // Arrange
             CharsWorld world = new();
             CharsSnapshot snapshot = new();
             snapshot.Characters.Add(new CharacterState
@@ -44,6 +47,7 @@ namespace Tests.Cli
                 BaseArmor = 0, BaseAttack = 1, ItemIds = { "ghost" },
             });
 
+            // Act & Assert
             CommandException ex = Assert.Throws<CommandException>(
                 () => CharsWorldMapper.LoadInto(world, snapshot));
             Assert.Contains("ghost", ex.Message);
@@ -52,6 +56,7 @@ namespace Tests.Cli
         [Fact]
         public void Text_RoundtripsThroughSnapshot_KeepsIds()
         {
+            // Arrange
             TextDocument document = new();
             Section outer = new("Outer");
             outer.AddChild(new Heading(2, "H"));
@@ -63,10 +68,12 @@ namespace Tests.Cli
             TextNavigator nav = new(document);
             string before = nav.RenderWhole(true);
 
+            // Act
             TextSnapshot snapshot = TextMapper.ToSnapshot(document);
             TextDocument rebuilt = TextMapper.ToDocument(snapshot);
             string after = new TextNavigator(rebuilt).RenderWhole(true);
 
+            // Assert
             Assert.Equal(before, after);
             Section rebuiltOuter = Assert.IsType<Section>(rebuilt.Elements[0]);
             Assert.Equal("e1", rebuiltOuter.Id);
@@ -76,9 +83,11 @@ namespace Tests.Cli
         [Fact]
         public void Text_ToDocument_UnknownKind_Throws()
         {
+            // Arrange
             TextSnapshot snapshot = new();
             snapshot.Roots.Add(new TextNode { Id = "e1", Kind = "portal" });
 
+            // Act & Assert
             Assert.Throws<CommandException>(() => TextMapper.ToDocument(snapshot));
         }
     }
