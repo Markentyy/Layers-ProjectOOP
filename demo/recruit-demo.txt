@@ -1,0 +1,29 @@
+create char
+Arthur
+100
+15
+5
+
+create item
+Staff
+10
+0
+
+create ability
+Fire
+2
+
+add --char_id char-1 --id item-1
+add --char_id char-1 --id ability-1
+act attack char-1 char-1
+save demo/saves/recruit-chars.json
+recruit klee
+fetch skyward-blade
+add --char_id klee --id skyward-blade
+act ability klee char-1 --id klee-t3
+show klee
+ls char
+load demo/saves/recruit-chars.json
+ls char
+load demo/saves/missing.json
+exit
