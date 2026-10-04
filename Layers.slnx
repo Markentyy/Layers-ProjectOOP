@@ -4,5 +4,8 @@
     <Project Path="src/Cli/Cli.csproj" />
     <Project Path="src/Core/Core.csproj" />
     <Project Path="src/Infra/Infra.csproj" />
+    <Project Path="src/Tests.Cli/Tests.Cli.csproj" />
+    <Project Path="src/Tests.Core/Tests.Core.csproj" />
+    <Project Path="src/Tests.Infra/Tests.Infra.csproj" />
   </Folder>
 </Solution>
