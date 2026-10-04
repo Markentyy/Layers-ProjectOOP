@@ -53,7 +53,7 @@ namespace Tests.Core
             document.AddElement(new Paragraph("P"));
             document.AddElement(new Heading(2, "Sub"));
 
-            string toc = document.RenderTableOfContents();
+            string toc = document.RenderTableOfContents().Replace("\r\n", "\n", StringComparison.Ordinal);
 
             Assert.Contains("- Top\n", toc);
             Assert.Contains("  - Sub\n", toc);
@@ -70,7 +70,7 @@ namespace Tests.Core
             outer.AddChild(inner);
             document.AddElement(outer);
 
-            string toc = document.RenderTableOfContents();
+            string toc = document.RenderTableOfContents().Replace("\r\n", "\n", StringComparison.Ordinal);
 
             Assert.Contains("- Outer\n", toc);
             Assert.Contains("  - Inner\n", toc);
