@@ -1,0 +1,70 @@
+@startuml LayersTests
+' Tests module: one test project per layer, fakes instead of mocks.
+' Rendered with the built-in smetana engine (no Graphviz needed).
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+namespace Tests.Core {
+  class CharacterTests {
+  }
+  class CombatAndInventoryTests {
+  }
+  class TextElementTests {
+  }
+  class TextDocumentTests {
+  }
+}
+
+namespace Tests.Infra {
+  class CharsStoreTests {
+  }
+  class TextStoreTests {
+  }
+}
+
+namespace Tests.Cli {
+  class FakeDisplay {
+    + Shows(text : string) : bool
+    + AllOutput() : string
+  }
+  class ParserTests {
+  }
+  class RegistryTests {
+  }
+  class CharsCommandTests {
+  }
+  class TextNavigatorTests {
+  }
+  class MapperTests {
+  }
+  class TextCommandTests {
+  }
+  class ReplTests {
+  }
+}
+
+Tests.Core.CharacterTests ..> Core.GameSystem.Character : tests
+Tests.Core.CombatAndInventoryTests ..> Core.GameSystem.CombatResolver : tests
+Tests.Core.TextElementTests ..> Core.TextSystem.Section : tests
+Tests.Core.TextDocumentTests ..> Core.TextSystem.TextDocument : tests
+Tests.Infra.CharsStoreTests ..> Infra.Data.JsonCharsStore : tests
+Tests.Infra.TextStoreTests ..> Infra.Data.JsonTextStore : tests
+Tests.Cli.ParserTests ..> Cli.Engine.LineParser : tests
+Tests.Cli.RegistryTests ..> Cli.Chars.CharsWorld : tests
+Tests.Cli.CharsCommandTests ..> Cli.Chars.ActCommand : tests
+Tests.Cli.CharsCommandTests ..> FakeDisplay : uses
+Tests.Cli.TextNavigatorTests ..> Cli.Text.TextNavigator : tests
+Tests.Cli.MapperTests ..> Cli.Text.TextMapper : tests
+Tests.Cli.TextCommandTests ..> Cli.Text.RmCommand : tests
+Tests.Cli.TextCommandTests ..> FakeDisplay : uses
+Tests.Cli.ReplTests ..> Cli.Engine.Repl : tests
+Tests.Cli.ReplTests ..> FakeDisplay : uses
+
+note bottom of Tests.Cli.FakeDisplay
+  Hand-rolled display double:
+  queued inputs, captured outputs.
+  No mocking packages needed.
+end note
+@enduml

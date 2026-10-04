@@ -17,6 +17,7 @@
 - [Технології](#технології)
 - [Структура](#структура)
 - [Швидкий старт](#швидкий-старт)
+- [Тестування](#тестування)
 - [Сумісність з версіями .NET](#сумісність-з-версіями-net)
 - [Діаграма класів](#діаграма-класів)
 - [Ролі класів](#ролі-класів)
@@ -48,8 +49,9 @@ id і імена, сувора перевірка аргументів) плюс
 | .NET (таргет) | 8.0 (`net8.0`, `RollForward LatestMajor`) |
 | .NET SDK для збірки | 8 або новіший |
 | JSON | `System.Text.Json` для сейвів |
+| xUnit | 112 тести: `Tests.Core` (39), `Tests.Infra` (7), `Tests.Cli` (66) |
 | PlantUML | діаграма класів (`docs/`) |
-| CI | GitHub Actions (Ubuntu + Windows), прогін 4 демо |
+| CI | GitHub Actions (Ubuntu + Windows): збірка, тести, прогін 4 демо |
 
 ## Структура
 
@@ -65,6 +67,10 @@ src/Cli/       - Engine (парсер, команди, REPL), Presenter (Prompte
                  маппер, команди), Text (TextNavigator, TextSeed, маппер,
                  команди)
 src/App/       - Program.cs: композиційний корінь, вибір режиму
+src/Tests.Core/  - 39 тестів домену: бій, інвентар, елементи, документ
+src/Tests.Infra/ - 7 тестів сховищ: раундтріп JSON і помилки файлів
+src/Tests.Cli/   - 66 тестів: парсер, реєстри, команди через FakeDisplay,
+                   навігація, маппери, REPL
 demo/          - chars-demo, text-demo, save-chars, save-text
 docs/          - діаграма класів (.puml + .png) і звіт (.docx)
 ```
@@ -99,6 +105,19 @@ Saved to 'demo/saves/chars.json'.
 Loaded from 'demo/saves/chars.json': 1 characters, 1 items, 1 abilities.
 ```
 
+## Тестування
+
+```bash
+dotnet test Layers.sln
+```
+
+Три тестові проєкти йдуть за шарами: `Tests.Core` перевіряє доменну
+логіку (бій, інвентар, рендер, зміст), `Tests.Infra` - JSON-сховища на
+тимчасових файлах (раундтріп і помилки), `Tests.Cli` - парсер, реєстри,
+навігацію, маппери і команди. Замість моків - ручний `FakeDisplay`:
+черга вводу і захоплений вивід без зайвих залежностей. CI ганяє тести
+на Ubuntu і Windows при кожному пуші.
+
 ## Сумісність з версіями .NET
 
 * Збірка: .NET 8 SDK або новіший (класичний `Layers.sln` читають усі).
@@ -107,14 +126,16 @@ Loaded from 'demo/saves/chars.json': 1 characters, 1 items, 1 abilities.
 
 ## Діаграма класів
 
-Система показана трьома фігурами: ядро інтерпретатора, режими зі сховищами,
-домени Core.
+Система показана чотирма фігурами: ядро інтерпретатора, режими зі
+сховищами, домени Core, тести.
 
 ![Ядро: парсер, команди, презентери, дисплей](docs/diagram-engine.png)
 
 ![Режими: світи, маппери, команди, JSON-сховища](docs/diagram-modes.png)
 
 ![Домени Core: персонажі і текст](docs/diagram-core.png)
+
+![Тести: Core, Infra, CLI](docs/diagram-tests.png)
 
 Повний звіт з ролями класів: `docs/Layers_Report.docx`.
 

@@ -25,6 +25,9 @@ jobs:
       - name: Build
         run: dotnet build Layers.sln --nologo
 
+      - name: Unit tests
+        run: dotnet test Layers.sln --no-build --nologo
+
       - name: Run characters demo and verify output
         run: |
           dotnet run --project src/App/App.csproj --no-build -- --chars < demo/chars-demo.txt > chars.txt
