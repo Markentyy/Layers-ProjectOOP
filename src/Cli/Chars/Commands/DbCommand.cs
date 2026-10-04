@@ -27,7 +27,7 @@ namespace Cli.Chars
         /// <summary>
         /// Gets the detailed usage line.
         /// </summary>
-        public string Usage => "db <chars|weapons> [--search <text>] [--limit <n>]";
+        public string Usage => "db <chars|weapons> [--search <id-text>] [--limit <n>]";
 
         /// <summary>
         /// Initializes a db command.
