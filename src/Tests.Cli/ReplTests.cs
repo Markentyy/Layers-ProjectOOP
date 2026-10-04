@@ -13,7 +13,7 @@ namespace Tests.Cli
             // Arrange
             CharsWorld world = new();
             FakeDisplay display = new("help", "", "nope", "exit");
-            CommandSet set = CharsMode.CreateCommands(world, display, new Infra.Data.JsonCharsStore());
+            CommandSet set = CharsMode.CreateCommands(world, display, new Infra.Data.JsonCharsStore(), new FakeGenshinApi(), new Random(42));
 
             // Act
             Repl.Run(display, "Intro.", set);
@@ -30,7 +30,7 @@ namespace Tests.Cli
             // Arrange
             CharsWorld world = new();
             FakeDisplay display = new("ls char");
-            CommandSet set = CharsMode.CreateCommands(world, display, new Infra.Data.JsonCharsStore());
+            CommandSet set = CharsMode.CreateCommands(world, display, new Infra.Data.JsonCharsStore(), new FakeGenshinApi(), new Random(42));
 
             // Act
             Repl.Run(display, "Intro.", set);
@@ -45,7 +45,7 @@ namespace Tests.Cli
             // Arrange
             CharsWorld world = new();
             FakeDisplay display = new("ls potion", "exit");
-            CommandSet set = CharsMode.CreateCommands(world, display, new Infra.Data.JsonCharsStore());
+            CommandSet set = CharsMode.CreateCommands(world, display, new Infra.Data.JsonCharsStore(), new FakeGenshinApi(), new Random(42));
 
             // Act
             Repl.Run(display, "Intro.", set);
@@ -60,7 +60,7 @@ namespace Tests.Cli
             // Arrange
             CharsWorld world = new();
             FakeDisplay display = new("add \"oops", "exit");
-            CommandSet set = CharsMode.CreateCommands(world, display, new Infra.Data.JsonCharsStore());
+            CommandSet set = CharsMode.CreateCommands(world, display, new Infra.Data.JsonCharsStore(), new FakeGenshinApi(), new Random(42));
 
             // Act
             Repl.Run(display, "Intro.", set);

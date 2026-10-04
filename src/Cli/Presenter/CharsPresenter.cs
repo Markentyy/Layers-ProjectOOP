@@ -1,5 +1,7 @@
+using Infra.Data;
 using Infra.Display;
 
+using Infra.WebApi;
 namespace Cli.Presenter
 {
     /// <summary>
@@ -269,5 +271,49 @@ namespace Cli.Presenter
         /// <param name="abilities">The loaded ability count.</param>
         public void ShowLoaded(string path, int characters, int items, int abilities) =>
             _display.WriteLine($"Loaded from '{path}': {characters} characters, {items} items, {abilities} abilities.");
+
+        /// <summary>
+        /// Prints one database character line.
+        /// </summary>
+        /// <param name="id">The database id.</param>
+        /// <param name="character">The database character.</param>
+        public void ShowDbCharacter(string id, GenshinCharacterDto character) =>
+            _display.WriteLine($"[{id}] {character.Name} ({character.Rarity} stars, {character.Vision} {character.Weapon}, {character.Nation})");
+
+        /// <summary>
+        /// Prints one database weapon line.
+        /// </summary>
+        /// <param name="id">The database id.</param>
+        /// <param name="weapon">The database weapon.</param>
+        public void ShowDbWeapon(string id, GenshinWeaponDto weapon) =>
+            _display.WriteLine($"[{id}] {weapon.Name} ({weapon.Rarity} stars {weapon.Type}, ATK {weapon.BaseAttack})");
+
+        /// <summary>
+        /// Reports a recruited database hero.
+        /// </summary>
+        /// <param name="name">The hero name.</param>
+        /// <param name="id">The assigned id.</param>
+        /// <param name="maxHealth">The rolled health.</param>
+        /// <param name="armor">The rolled armor.</param>
+        /// <param name="attack">The rolled attack.</param>
+        /// <param name="talents">The learned talent count.</param>
+        public void ShowRecruited(string name, string id, int maxHealth, int armor, int attack, int talents) =>
+            _display.WriteLine($"Recruited '{name}' [{id}] ({maxHealth} HP, {armor} ARM, {attack} ATK, {talents} talents learned).");
+
+        /// <summary>
+        /// Reports a fetched database weapon.
+        /// </summary>
+        /// <param name="name">The weapon name.</param>
+        /// <param name="id">The assigned id.</param>
+        /// <param name="attack">The attack bonus.</param>
+        /// <param name="armor">The armor bonus.</param>
+        public void ShowFetched(string name, string id, int attack, int armor) =>
+            _display.WriteLine($"Fetched '{name}' [{id}] (+{attack} ATK, +{armor} ARM).");
+
+        /// <summary>
+        /// Writes a pre-rendered character sheet as is.
+        /// </summary>
+        /// <param name="text">The rendered sheet text.</param>
+        public void ShowSheet(string text) => _display.Write(text);
     }
 }

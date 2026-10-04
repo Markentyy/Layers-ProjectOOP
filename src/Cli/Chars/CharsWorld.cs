@@ -1,4 +1,6 @@
 using Core.GameSystem;
+using Infra.Data;
+using Infra.WebApi;
 namespace Cli.Chars
 {
     /// <summary>
@@ -26,6 +28,12 @@ namespace Cli.Chars
             new("ability", a => a.Name);
 
         private readonly Dictionary<string, List<string>> _books =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Gets the remote lore by character id for heroes recruited from the database.
+        /// </summary>
+        public Dictionary<string, GenshinCharacterDto> Lore { get; } =
             new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
@@ -66,6 +74,7 @@ namespace Cli.Chars
             Items.Clear();
             Abilities.Clear();
             _books.Clear();
+            Lore.Clear();
         }
 
         /// <summary>

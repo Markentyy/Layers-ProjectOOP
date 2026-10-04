@@ -1,7 +1,7 @@
 using Cli.Engine;
 using Core.GameSystem;
 using Infra.Data;
-
+using Infra.WebApi;
 namespace Cli.Chars
 {
     /// <summary>
@@ -64,6 +64,11 @@ namespace Cli.Chars
                 });
             }
 
+            foreach (KeyValuePair<string, GenshinCharacterDto> lore in world.Lore)
+            {
+                snapshot.Lore[lore.Key] = lore.Value;
+            }
+
             return snapshot;
         }
 
@@ -79,6 +84,11 @@ namespace Cli.Chars
             try
             {
                 world.Clear();
+
+                foreach (KeyValuePair<string, GenshinCharacterDto> lore in snapshot.Lore)
+                {
+                    world.Lore[lore.Key] = lore.Value;
+                }
 
                 foreach (ItemState state in snapshot.Items)
                 {

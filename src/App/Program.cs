@@ -3,6 +3,7 @@ using Cli.Engine;
 using Cli.Text;
 using Infra.Data;
 using Infra.Display;
+using Infra.WebApi;
 
 // Composition root: wires the layers together.
 //   dotnet run -- --text   text document mode
@@ -11,6 +12,8 @@ using Infra.Display;
 string mode = SelectMode(args);
 
 IDisplay display = new ConsoleDisplay();
+using HttpClient http = new() { BaseAddress = new Uri("https://genshin.jmp.blue/"), Timeout = TimeSpan.FromSeconds(30) };
+IGenshinApiClient api = new GenshinApiClient(http);
 if (mode == "text")
 {
     TextNavigator navigator = new(TextSeed.CreateDemoDocument());
@@ -19,7 +22,7 @@ if (mode == "text")
 else
 {
     CharsWorld world = new();
-    Repl.Run(display, CharsMode.Intro, CharsMode.CreateCommands(world, display, new JsonCharsStore()));
+    Repl.Run(display, CharsMode.Intro, CharsMode.CreateCommands(world, display, new JsonCharsStore(), api, new Random()));
 }
 
 static string SelectMode(string[] args)

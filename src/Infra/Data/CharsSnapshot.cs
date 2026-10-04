@@ -1,3 +1,5 @@
+using Infra.WebApi;
+
 namespace Infra.Data
 {
     /// <summary>
@@ -19,5 +21,10 @@ namespace Infra.Data
         /// Gets or sets the stored abilities.
         /// </summary>
         public List<AbilityState> Abilities { get; set; } = new();
+
+        /// <summary>
+        /// Gets or sets the remote lore by character id.
+        /// </summary>
+        public Dictionary<string, GenshinCharacterDto> Lore { get; set; } = new();
     }
 }
