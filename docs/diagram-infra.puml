@@ -1,0 +1,66 @@
+@startuml LayersInfra
+' Infra: display, file stores, remote database client.
+' Rendered with the built-in smetana engine (no Graphviz needed).
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+namespace Infra.Display {
+  interface IDisplay {
+    + Write(message : string) : void
+    + WriteLine(message : string) : void
+    + ReadLine() : string
+  }
+  class ConsoleDisplay {
+  }
+}
+
+namespace Infra.Data {
+  interface ICharsStore {
+    + Save(snapshot : CharsSnapshot, path : string) : void
+    + Load(path : string) : CharsSnapshot
+  }
+  class JsonCharsStore {
+  }
+  interface ITextStore {
+    + Save(snapshot : TextSnapshot, path : string) : void
+    + Load(path : string) : TextSnapshot
+  }
+  class JsonTextStore {
+  }
+  class CharsSnapshot {
+  }
+  class TextSnapshot {
+  }
+}
+
+namespace Infra.WebApi {
+  interface IGenshinApiClient {
+    + GetCharacterAsync(id : string) : GenshinCharacterDto
+    + GetWeaponAsync(id : string) : GenshinWeaponDto
+  }
+  class GenshinApiClient {
+  }
+  class GenshinCharacterDto {
+    + Rarity : int
+    + SkillTalents : list
+  }
+  class GenshinWeaponDto {
+    + BaseAttack : int
+    + Rarity : int
+  }
+}
+
+note bottom of Infra.Data.ICharsStore
+  Replaceable persistence: commands
+  depend on the interface, JSON is
+  just one implementation.
+end note
+
+Infra.Data.JsonCharsStore ..|> Infra.Data.ICharsStore : realizes
+Infra.Data.JsonTextStore ..|> Infra.Data.ITextStore : realizes
+Infra.Data.JsonCharsStore ..> Infra.Data.CharsSnapshot : writes
+Infra.Data.JsonTextStore ..> Infra.Data.TextSnapshot : writes
+Infra.WebApi.GenshinApiClient ..|> Infra.WebApi.IGenshinApiClient : realizes
+@enduml

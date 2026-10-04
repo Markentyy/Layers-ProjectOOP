@@ -43,15 +43,6 @@ namespace Cli.Presenter {
   }
 }
 
-namespace Infra.Display {
-  interface IDisplay {
-    + Write(message : string) : void
-    + WriteLine(message : string) : void
-    + ReadLine() : string
-  }
-  class ConsoleDisplay {
-  }
-}
 
 note top of Cli.Engine.IShellCommand
   OCP: a new command is one class
@@ -63,7 +54,6 @@ note bottom of Cli.Presenter.CharsPresenter
   Commands never touch strings.
 end note
 
-Infra.Display.ConsoleDisplay ..|> Infra.Display.IDisplay : realizes
 Cli.Engine.Repl ..> Cli.Engine.CommandSet : dispatches
 Cli.Engine.Repl ..> Cli.Engine.IShellCommand : executes
 Cli.Engine.LineParser ..> Cli.Engine.ParsedCommand : creates

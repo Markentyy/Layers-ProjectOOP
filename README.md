@@ -10,6 +10,8 @@
 перекладений на шарувату структуру CLI / Core / Infra. Кожен шар - окремий
 проєкт зі своїми моделями, залежності тільки вниз, частини замінні:
 дисплей, формат сейвів і презентери міняються без торкання команд і домену.
+Героїв і зброю можна стягувати з віддаленої бази (Genshin API) і
+вербувати в гру.
 
 ## Зміст
 
@@ -40,6 +42,10 @@ id і імена, сувора перевірка аргументів) плюс
   реалізацією `ICharsStore` / `ITextStore`.
 * **Core без змін API** - для відновлення стану лише `internal RestoreState`
   і `InternalsVisibleTo("Cli")`; публічна поверхня та сама.
+* **WebApi (Infra)** - герої і зброя з віддаленої бази Genshin
+  (`https://genshin.jmp.blue`, JSON через `HttpClient`): `db` - список,
+  `recruit` - вербовка з кидком статів за рідкістю, `fetch` - імпорт зброї,
+  `show` - лист персонажа як структурований текст.
 
 ## Технології
 
@@ -49,7 +55,7 @@ id і імена, сувора перевірка аргументів) плюс
 | .NET (таргет) | 8.0 (`net8.0`, `RollForward LatestMajor`) |
 | .NET SDK для збірки | 8 або новіший |
 | JSON | `System.Text.Json` для сейвів |
-| xUnit | 112 тести: `Tests.Core` (39), `Tests.Infra` (7), `Tests.Cli` (66) |
+| xUnit | 140 тестів: `Tests.Core` (39), `Tests.Infra` (14), `Tests.Cli` (87) |
 | PlantUML | діаграма класів (`docs/`) |
 | CI | GitHub Actions (Ubuntu + Windows): збірка, тести, прогін 4 демо |
 
@@ -61,17 +67,19 @@ src/Core/      - домен: GameSystem (Character, Equipment, Inventory,
                  Ability, CombatResolver), TextSystem (TextElement, Section,
                  Heading, Paragraph, Link, TextDocument)
 src/Infra/     - Display (IDisplay, ConsoleDisplay), Data (DTO, ICharsStore /
-                 ITextStore, JsonCharsStore / JsonTextStore)
+                 ITextStore, JsonCharsStore / JsonTextStore), WebApi
+                 (IGenshinApiClient, GenshinApiClient, DTO, WebApiException)
 src/Cli/       - Engine (парсер, команди, REPL), Presenter (Prompter,
                  CharsPresenter, TextPresenter), Chars (Registry, CharsWorld,
-                 маппер, команди), Text (TextNavigator, TextSeed, маппер,
+                 маппери, команди create/add/act/ls/save/load/db/recruit/fetch/show),
+                 Text (TextNavigator, TextSeed, маппер, лист персонажа,
                  команди)
 src/App/       - Program.cs: композиційний корінь, вибір режиму
 src/Tests.Core/  - 39 тестів домену: бій, інвентар, елементи, документ
-src/Tests.Infra/ - 7 тестів сховищ: раундтріп JSON і помилки файлів
-src/Tests.Cli/   - 66 тестів: парсер, реєстри, команди через FakeDisplay,
-                   навігація, маппери, REPL
-demo/          - chars-demo, text-demo, save-chars, save-text
+src/Tests.Infra/ - 14 тестів: сховища і WebApi-клієнт (раундтріп, помилки)
+src/Tests.Cli/   - 87 тестів: парсер, реєстри, команди через FakeDisplay,
+                   навігація, маппери (включно з Genshin), REPL
+demo/          - chars-demo, text-demo, save-chars, save-text, recruit-demo
 docs/          - діаграма класів (.puml + .png) і звіт (.docx)
 ```
 
@@ -94,6 +102,12 @@ dotnet run --project src/App --no-build -- --chars < demo/chars-demo.txt
 dotnet run --project src/App --no-build -- --text < demo/text-demo.txt
 dotnet run --project src/App --no-build -- --chars < demo/save-chars.txt
 dotnet run --project src/App --no-build -- --text < demo/save-text.txt
+```
+
+Живе демо з базою (потрібен інтернет, в CI не ганяється):
+
+```bash
+dotnet run --project src/App --no-build -- --chars < demo/recruit-demo.txt
 ```
 
 Сейви пишуться JSON поруч (`demo/saves/`, ігноряться гітом):
@@ -133,6 +147,8 @@ dotnet test Layers.sln
 
 ![Режими: світи, маппери, команди, JSON-сховища](docs/diagram-modes.png)
 
+![Інфра: дисплей, файлові сховища, WebApi-клієнт](docs/diagram-infra.png)
+
 ![Домени Core: персонажі і текст](docs/diagram-core.png)
 
 ![Тести: Core, Infra, CLI](docs/diagram-tests.png)
@@ -151,6 +167,24 @@ dotnet test Layers.sln
 | `TextNavigator` | Модель режиму: позиція, шляхи, нумерація |
 | `CharsWorldMapper` / `TextMapper` | Міст світ-DTO, відновлення через internal API Core |
 | `Character` / `Ability` / `Section` / `TextDocument` | Core: домен без змін публічного API |
+| `GenshinApiClient` / `GenshinMapper` / `CharacterSheet` | WebApi: HTTP-клієнт, маппінг за рідкістю, лист персонажа текстом |
+
+## Віддалена база
+
+Обрано рекомендований простий інтерфейс: `https://genshin.jmp.blue`
+(JSON, без авторизації). База косметична - статів у персонажів немає,
+тому характеристики генеруються випадково за рідкістю:
+
+| Рідкість | HP | ATK | ARM |
+|---|---|---|---|
+| 5 зірок | 90-120 | 20-30 | 3-6 |
+| 4 зірки | 60-90 | 12-20 | 1-4 |
+| інша | 40-70 | 8-14 | 0-2 |
+
+Таланти стають здібностями за типом: burst - x3, skill - x2, решта - x1.
+Зброя має власні стати: бонус атаки = `baseAttack / 10`, бонус броні =
+рідкість. Лист персонажа (`show`) - це `Section`-документ: заголовок,
+опис, таланти і спорядження.
 
 ## Як замінити частину
 
